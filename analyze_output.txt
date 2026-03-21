@@ -1,0 +1,152 @@
+﻿Analyzing rapidx_mobile...                                      
+
+   info - The file name 'mainAdmin.dart' isn't a lower_case_with_underscores identifier - lib\Admin\mainAdmin.dart:1:1 - file_names
+   info - The type name 'mainAdmin' isn't an UpperCamelCase identifier - lib\Admin\mainAdmin.dart:4:7 - camel_case_types
+   info - The type name '_mainAdminState' isn't an UpperCamelCase identifier - lib\Admin\mainAdmin.dart:11:7 - camel_case_types
+   info - The file name 'CommonLogin.dart' isn't a lower_case_with_underscores identifier - lib\Common\CommonLogin.dart:1:1 - file_names
+   info - The type name 'customerLogin' isn't an UpperCamelCase identifier - lib\Common\CommonLogin.dart:18:7 - camel_case_types
+   info - The type name '_customerLoginState' isn't an UpperCamelCase identifier - lib\Common\CommonLogin.dart:25:7 - camel_case_types
+   info - Don't invoke 'print' in production code - lib\Common\CommonLogin.dart:231:23 - avoid_print
+   info - Don't use 'BuildContext's across async gaps - lib\Common\CommonLogin.dart:238:27 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\Common\CommonLogin.dart:255:27 - use_build_context_synchronously
+warning - The value of the local variable 'email' isn't used - lib\Common\CommonLogin.dart:266:38 - unused_local_variable
+   info - Don't use 'BuildContext's across async gaps - lib\Common\CommonLogin.dart:270:27 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\Common\CommonLogin.dart:277:27 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\Common\CommonLogin.dart:283:46 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\Common\CommonLogin.dart:291:44 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\Common\CommonLogin.dart:299:42 - use_build_context_synchronously
+   info - The file name 'addressDetailsBottomSheet.dart' isn't a lower_case_with_underscores identifier - lib\Common\addressDetailsBottomSheet.dart:1:1 - file_names
+   info - The file name 'mapPickerPage.dart' isn't a lower_case_with_underscores identifier - lib\Common\mapPickerPage.dart:1:1 - file_names
+   info - The file name 'placeSearchPage.dart' isn't a lower_case_with_underscores identifier - lib\Common\placeSearchPage.dart:1:1 - file_names
+   info - The file name 'roleSelectionPage.dart' isn't a lower_case_with_underscores identifier - lib\Common\roleSelectionPage.dart:1:1 - file_names
+   info - Don't use 'BuildContext's across async gaps - lib\Common\roleSelectionPage.dart:27:30 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\Common\roleSelectionPage.dart:32:28 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Common\roleSelectionPage.dart:112:35 - deprecated_member_use
+   info - The file name 'savedAddressesPage.dart' isn't a lower_case_with_underscores identifier - lib\Common\savedAddressesPage.dart:1:1 - file_names
+   info - The file name 'showOtpBottomSheet.dart' isn't a lower_case_with_underscores identifier - lib\Common\showOtpBottomSheet.dart:1:1 - file_names
+   info - The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\Common\showOtpBottomSheet.dart:2:8 - unnecessary_import
+   info - The file name 'customerSignup.dart' isn't a lower_case_with_underscores identifier - lib\Customer\customerSignup.dart:1:1 - file_names
+   info - The type name 'customerSignUp' isn't an UpperCamelCase identifier - lib\Customer\customerSignup.dart:11:7 - camel_case_types
+   info - The type name '_customerSignUpState' isn't an UpperCamelCase identifier - lib\Customer\customerSignup.dart:18:7 - camel_case_types
+   info - Don't use 'BuildContext's across async gaps - lib\Customer\customerSignup.dart:260:25 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\Customer\customerSignup.dart:266:44 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\Customer\customerSignup.dart:275:25 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\Customer\customerSignup.dart:282:44 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\Customer\customerSignup.dart:292:42 - use_build_context_synchronously
+   info - The file name 'homeApp.dart' isn't a lower_case_with_underscores identifier - lib\Customer\mainApp\homeApp\homeApp.dart:1:1 - file_names
+   info - The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\Customer\mainApp\homeApp\homeApp.dart:2:8 - unnecessary_import
+   info - The type name 'homeApp' isn't an UpperCamelCase identifier - lib\Customer\mainApp\homeApp\homeApp.dart:12:7 - camel_case_types
+   info - The type name '_homeAppState' isn't an UpperCamelCase identifier - lib\Customer\mainApp\homeApp\homeApp.dart:19:7 - camel_case_types
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Customer\mainApp\homeApp\homeApp.dart:510:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Customer\mainApp\homeApp\homeApp.dart:532:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Customer\mainApp\homeApp\homeApp.dart:546:50 - deprecated_member_use
+   info - The file name 'billingPage.dart' isn't a lower_case_with_underscores identifier - lib\Customer\mainApp\ordersApp\UI\billingPage.dart:1:1 - file_names
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Customer\mainApp\ordersApp\UI\billingPage.dart:50:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Customer\mainApp\ordersApp\UI\billingPage.dart:66:54 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\Customer\mainApp\ordersApp\UI\billingPage.dart:130:35 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\Customer\mainApp\ordersApp\UI\billingPage.dart:131:42 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\Customer\mainApp\ordersApp\UI\billingPage.dart:152:33 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\Customer\mainApp\ordersApp\UI\billingPage.dart:155:42 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\Customer\mainApp\ordersApp\UI\billingPage.dart:162:40 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\Customer\mainApp\ordersApp\UI\billingPage.dart:164:42 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\Customer\mainApp\ordersApp\UI\billingPage.dart:172:33 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\Customer\mainApp\ordersApp\UI\billingPage.dart:173:40 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Customer\mainApp\ordersApp\UI\billingPage.dart:211:44 - deprecated_member_use
+   info - The file name 'parcelOrderPage.dart' isn't a lower_case_with_underscores identifier - lib\Customer\mainApp\ordersApp\UI\parcelOrderPage.dart:1:1 - file_names
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Customer\mainApp\ordersApp\UI\parcelOrderPage.dart:172:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Customer\mainApp\ordersApp\UI\parcelOrderPage.dart:188:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Customer\mainApp\ordersApp\UI\parcelOrderPage.dart:490:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Customer\mainApp\ordersApp\UI\parcelOrderPage.dart:571:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Customer\mainApp\ordersApp\UI\parcelOrderPage.dart:633:33 - deprecated_member_use
+   info - The file name 'pickupLocationPage.dart' isn't a lower_case_with_underscores identifier - lib\Customer\mainApp\ordersApp\UI\pickupLocationPage.dart:1:1 - file_names
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Customer\mainApp\ordersApp\UI\pickupLocationPage.dart:60:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Customer\mainApp\ordersApp\UI\pickupLocationPage.dart:76:52 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Customer\mainApp\ordersApp\UI\pickupLocationPage.dart:110:41 - deprecated_member_use
+   info - The file name 'placeOrderBottomSheet.dart' isn't a lower_case_with_underscores identifier - lib\Customer\mainApp\ordersApp\UI\placeOrderBottomSheet.dart:1:1 - file_names
+warning - Unused import: 'package:newrapidx/Common/savedAddressesPage.dart' - lib\Customer\mainApp\ordersApp\UI\placeOrderBottomSheet.dart:8:8 - unused_import
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Customer\mainApp\ordersApp\UI\placeOrderBottomSheet.dart:42:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Customer\mainApp\ordersApp\UI\placeOrderBottomSheet.dart:94:55 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Customer\mainApp\ordersApp\UI\placeOrderBottomSheet.dart:188:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Customer\mainApp\ordersApp\UI\placeOrderBottomSheet.dart:288:56 - deprecated_member_use
+   info - The file name 'ordesApp.dart' isn't a lower_case_with_underscores identifier - lib\Customer\mainApp\ordersApp\ordesApp.dart:1:1 - file_names
+   info - The type name 'ordersApp' isn't an UpperCamelCase identifier - lib\Customer\mainApp\ordersApp\ordesApp.dart:8:7 - camel_case_types
+   info - The type name '_ordersAppState' isn't an UpperCamelCase identifier - lib\Customer\mainApp\ordersApp\ordesApp.dart:15:7 - camel_case_types
+   info - The file name 'accountSettingsPage.dart' isn't a lower_case_with_underscores identifier - lib\Customer\mainApp\profileApp\accountSettingsPage.dart:1:1 - file_names
+   info - The file name 'helpBottomSheet.dart' isn't a lower_case_with_underscores identifier - lib\Customer\mainApp\profileApp\helpBottomSheet.dart:1:1 - file_names
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\Customer\mainApp\profileApp\helpBottomSheet.dart:175:46 - deprecated_member_use
+   info - The file name 'profileApp.dart' isn't a lower_case_with_underscores identifier - lib\Customer\mainApp\profileApp\profileApp.dart:1:1 - file_names
+warning - Unused import: 'package:newrapidx/Admin/mainAdmin.dart' - lib\Customer\mainApp\profileApp\profileApp.dart:4:8 - unused_import
+   info - The type name 'profileApp' isn't an UpperCamelCase identifier - lib\Customer\mainApp\profileApp\profileApp.dart:14:7 - camel_case_types
+   info - The type name '_profileAppState' isn't an UpperCamelCase identifier - lib\Customer\mainApp\profileApp\profileApp.dart:21:7 - camel_case_types
+   info - Don't invoke 'print' in production code - lib\Customer\mainApp\profileApp\profileApp.dart:104:23 - avoid_print
+   info - Don't invoke 'print' in production code - lib\Customer\mainApp\profileApp\profileApp.dart:113:23 - avoid_print
+   info - Don't invoke 'print' in production code - lib\Customer\mainApp\profileApp\profileApp.dart:122:23 - avoid_print
+   info - Don't invoke 'print' in production code - lib\Customer\mainApp\profileApp\profileApp.dart:231:17 - avoid_print
+   info - The file name 'profileEditBottomSheet.dart' isn't a lower_case_with_underscores identifier - lib\Customer\mainApp\profileApp\profileEditBottomSheet.dart:1:1 - file_names
+   info - Don't invoke 'print' in production code - lib\Customer\mainApp\profileApp\profileEditBottomSheet.dart:152:19 - avoid_print
+   info - Don't invoke 'print' in production code - lib\Customer\mainApp\profileApp\profileEditBottomSheet.dart:153:19 - avoid_print
+   info - Don't invoke 'print' in production code - lib\Customer\mainApp\profileApp\profileEditBottomSheet.dart:154:19 - avoid_print
+   info - Don't invoke 'print' in production code - lib\Customer\mainApp\profileApp\profileEditBottomSheet.dart:155:19 - avoid_print
+   info - The file name 'termsAndConditionsBottomSheet.dart' isn't a lower_case_with_underscores identifier - lib\Customer\mainApp\profileApp\termsAndConditionsBottomSheet.dart:1:1 - file_names
+   info - The file name 'deliveryPartnerSignUp.dart' isn't a lower_case_with_underscores identifier - lib\deliveyPartner\deliveryPartnerSignUp.dart:1:1 - file_names
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\deliveyPartner\deliveryPartnerSignUp.dart:625:57 - deprecated_member_use
+   info - The file name 'homepageDP.dart' isn't a lower_case_with_underscores identifier - lib\deliveyPartner\mainApp\Home\homepageDP.dart:1:1 - file_names
+warning - Unused import: '../Orders/ordersPageDP.dart' - lib\deliveyPartner\mainApp\Home\homepageDP.dart:9:8 - unused_import
+   info - Parameter 'key' could be a super parameter - lib\deliveyPartner\mainApp\Home\homepageDP.dart:12:9 - use_super_parameters
+warning - Dead code - lib\deliveyPartner\mainApp\Home\homepageDP.dart:37:26 - dead_code
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\deliveyPartner\mainApp\Home\homepageDP.dart:129:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\deliveyPartner\mainApp\Home\homepageDP.dart:204:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\deliveyPartner\mainApp\Home\homepageDP.dart:207:38 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\deliveyPartner\mainApp\Home\homepageDP.dart:242:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\deliveyPartner\mainApp\Home\homepageDP.dart:257:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\deliveyPartner\mainApp\Home\homepageDP.dart:280:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\deliveyPartner\mainApp\Home\homepageDP.dart:300:50 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\deliveyPartner\mainApp\Home\homepageDP.dart:328:50 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\deliveyPartner\mainApp\Home\homepageDP.dart:367:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\deliveyPartner\mainApp\Home\homepageDP.dart:560:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\deliveyPartner\mainApp\Home\homepageDP.dart:589:34 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\deliveyPartner\mainApp\Home\homepageDP.dart:624:41 - deprecated_member_use
+   info - The file name 'ordersPageDP.dart' isn't a lower_case_with_underscores identifier - lib\deliveyPartner\mainApp\Orders\ordersPageDP.dart:1:1 - file_names
+   info - Parameter 'key' could be a super parameter - lib\deliveyPartner\mainApp\Orders\ordersPageDP.dart:7:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\deliveyPartner\mainApp\Orders\ordersPageDP.dart:144:56 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\deliveyPartner\mainApp\Orders\ordersPageDP.dart:225:60 - deprecated_member_use
+   info - The file name 'bankAccountBottomSheet.dart' isn't a lower_case_with_underscores identifier - lib\deliveyPartner\mainApp\Profile\bankAccountBottomSheet.dart:1:1 - file_names
+   info - The file name 'documentsBottomSheet.dart' isn't a lower_case_with_underscores identifier - lib\deliveyPartner\mainApp\Profile\documentsBottomSheet.dart:1:1 - file_names
+   info - The file name 'helpBottomSheetDP.dart' isn't a lower_case_with_underscores identifier - lib\deliveyPartner\mainApp\Profile\helpBottomSheetDP.dart:1:1 - file_names
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\deliveyPartner\mainApp\Profile\helpBottomSheetDP.dart:166:46 - deprecated_member_use
+   info - The file name 'privacyPolicyBottomSheetDP.dart' isn't a lower_case_with_underscores identifier - lib\deliveyPartner\mainApp\Profile\privacyPolicyBottomSheetDP.dart:1:1 - file_names
+   info - The file name 'profilePageDP.dart' isn't a lower_case_with_underscores identifier - lib\deliveyPartner\mainApp\Profile\profilePageDP.dart:1:1 - file_names
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\deliveyPartner\mainApp\Profile\profilePageDP.dart:111:50 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\deliveyPartner\mainApp\Profile\profilePageDP.dart:150:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\deliveyPartner\mainApp\Profile\profilePageDP.dart:337:54 - deprecated_member_use
+   info - The file name 'termsAndConditionsBottomSheetDP.dart' isn't a lower_case_with_underscores identifier - lib\deliveyPartner\mainApp\Profile\termsAndConditionsBottomSheetDP.dart:1:1 - file_names
+   info - The file name 'workPreferenceBottomSheet.dart' isn't a lower_case_with_underscores identifier - lib\deliveyPartner\mainApp\Profile\workPreferenceBottomSheet.dart:1:1 - file_names
+   info - The file name 'mainPageDP.dart' isn't a lower_case_with_underscores identifier - lib\deliveyPartner\mainApp\mainPageDP.dart:1:1 - file_names
+   info - Constructors for public widgets should have a named 'key' parameter - lib\deliveyPartner\mainApp\mainPageDP.dart:7:7 - use_key_in_widget_constructors
+   info - The type name 'mainPageDP' isn't an UpperCamelCase identifier - lib\deliveyPartner\mainApp\mainPageDP.dart:7:7 - camel_case_types
+   info - The type name '_mainPageDPState' isn't an UpperCamelCase identifier - lib\deliveyPartner\mainApp\mainPageDP.dart:12:7 - camel_case_types
+   info - The constant name 'PickUpGreen' isn't a lowerCamelCase identifier - lib\deliveyPartner\theme\dp_theme.dart:14:22 - constant_identifier_names
+   info - The constant name 'DropRed' isn't a lowerCamelCase identifier - lib\deliveyPartner\theme\dp_theme.dart:15:22 - constant_identifier_names
+   info - The type name 'newRapidX' isn't an UpperCamelCase identifier - lib\main.dart:35:7 - camel_case_types
+   info - The file name 'deliveryPartnerProvider.dart' isn't a lower_case_with_underscores identifier - lib\providers\deliveryPartnerProvider.dart:1:1 - file_names
+   info - The file name 'userDataProvider.dart' isn't a lower_case_with_underscores identifier - lib\providers\userDataProvider.dart:1:1 - file_names
+   info - The private field _savedAddresses could be 'final' - lib\providers\userDataProvider.dart:35:29 - prefer_final_fields
+   info - The file name 'splashPage.dart' isn't a lower_case_with_underscores identifier - lib\splashPage.dart:1:1 - file_names
+   info - The type name 'splashPage' isn't an UpperCamelCase identifier - lib\splashPage.dart:6:7 - camel_case_types
+
+flutter : 133 issues found. 
+(ran in 5.3s)
+At line:1 char:1
++ flutter analyze --no-pub 
+2>&1 | Out-File -FilePath 
+C:\Workspace\New_r ...
++ 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (133 iss  
+  ues found. (ran in 5.3s)   
+ :String) [], RemoteExcep    
+tion
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 

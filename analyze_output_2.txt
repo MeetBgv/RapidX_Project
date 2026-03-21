@@ -1,0 +1,14 @@
+﻿Analyzing profileApp.dart, parcelOrderPage.dart, userDataProvider.dart...
+
+   info - lib\mainApp\ordersApp\UI\parcelOrderPage.dart:1:1 - The file name 'parcelOrderPage.dart' isn't a lower_case_with_underscores identifier. Try changing the name to follow the lower_case_with_underscores style. - file_names
+   info - lib\mainApp\ordersApp\UI\parcelOrderPage.dart:110:37 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - lib\mainApp\ordersApp\UI\parcelOrderPage.dart:126:54 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - lib\mainApp\ordersApp\UI\parcelOrderPage.dart:276:43 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - lib\mainApp\ordersApp\UI\parcelOrderPage.dart:357:33 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - lib\mainApp\ordersApp\UI\parcelOrderPage.dart:419:33 - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement. - deprecated_member_use
+   info - lib\mainApp\profileApp\profileApp.dart:1:1 - The file name 'profileApp.dart' isn't a lower_case_with_underscores identifier. Try changing the name to follow the lower_case_with_underscores style. - file_names
+   info - lib\mainApp\profileApp\profileApp.dart:6:7 - The type name 'profileApp' isn't an UpperCamelCase identifier. Try changing the name to follow the UpperCamelCase style. - camel_case_types
+   info - lib\providers\userDataProvider.dart:1:1 - The file name 'userDataProvider.dart' isn't a lower_case_with_underscores identifier. Try changing the name to follow the lower_case_with_underscores style. - file_names
+   info - lib\providers\userDataProvider.dart:21:29 - The private field _savedAddresses could be 'final'. Try making the field 'final'. - prefer_final_fields
+
+10 issues found.

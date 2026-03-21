@@ -1,0 +1,6 @@
+﻿Analyzing parcelorderpage.dart...                               
+
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\customer\mainapp\ordersapp\ui\parcelorderpage.dart:368:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\customer\mainapp\ordersapp\ui\parcelorderpage.dart:384:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\customer\mainapp\ordersapp\ui\parcelorderpage.dart:836:33 - deprecated_member_use
+
