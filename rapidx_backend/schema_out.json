@@ -1,0 +1,94 @@
+[
+  {
+    "column_name": "order_id",
+    "data_type": "integer"
+  },
+  {
+    "column_name": "sender_id",
+    "data_type": "integer"
+  },
+  {
+    "column_name": "business_id",
+    "data_type": "integer"
+  },
+  {
+    "column_name": "sender_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "sender_phone",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "sender_address",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "sender_state",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "sender_city",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "sender_pincode",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "receiver_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "receiver_phone",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "receiver_address",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "receiver_state",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "receiver_city",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "receiver_pincode",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "special_instruction",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "order_amount",
+    "data_type": "integer"
+  },
+  {
+    "column_name": "delivery_status_id",
+    "data_type": "integer"
+  },
+  {
+    "column_name": "created_at",
+    "data_type": "timestamp without time zone"
+  },
+  {
+    "column_name": "is_complete",
+    "data_type": "boolean"
+  },
+  {
+    "column_name": "urgency",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "fare_breakdown",
+    "data_type": "jsonb"
+  },
+  {
+    "column_name": "distance_km",
+    "data_type": "numeric"
+  }
+]

@@ -1,0 +1,88 @@
+[
+  {
+    "order_id": 50160690,
+    "sender_id": 10420688,
+    "business_id": null,
+    "sender_name": "Meet Bhagvakar",
+    "sender_phone": "8160319283",
+    "sender_address": "Hazira Bridge, Surat",
+    "sender_state": "Gujarat",
+    "sender_city": "Majura Taluka",
+    "sender_pincode": "394518",
+    "receiver_name": "anna",
+    "receiver_phone": "936458297",
+    "receiver_address": "Gajuwaka, Visakhapatnam",
+    "receiver_state": "Andhra Pradesh",
+    "receiver_city": "Yarada",
+    "receiver_pincode": "530005",
+    "special_instruction": "",
+    "order_amount": 39142,
+    "delivery_status_id": 35,
+    "created_at": "2026-03-12T06:10:06.074Z",
+    "is_complete": false,
+    "urgency": "Normal",
+    "fare_breakdown": {
+      "mode": "LOCAL_DELIVERY",
+      "urgency": "Normal",
+      "base_price": 200,
+      "multiplier": 1,
+      "vehicle_id": 4,
+      "distance_km": 1485.1156,
+      "final_price": 37252.89,
+      "rate_per_km": 25,
+      "distance_cost": 37052.89
+    },
+    "distance_km": null,
+    "delivery_partner_id": 10574138,
+    "sender_lat": "21.14396191281741",
+    "sender_lng": "72.7381092578421",
+    "receiver_lat": "17.648988636278276",
+    "receiver_lng": "83.27514086097356"
+  },
+  {
+    "order_id": 50771918,
+    "sender_id": 10420688,
+    "business_id": null,
+    "sender_name": "Meet Bhagvakar",
+    "sender_phone": "8160319283",
+    "sender_address": "Shreepad Seasons, Chorasi Taluka, Surat, Gujarat, 395009, India",
+    "sender_state": "Gujarat",
+    "sender_city": "Chorasi Taluka",
+    "sender_pincode": "395009",
+    "receiver_name": "g",
+    "receiver_phone": "6",
+    "receiver_address": "ISKCON Vesu road, Majura Taluka, Surat, Gujarat, 394518, India",
+    "receiver_state": "Gujarat",
+    "receiver_city": "Majura Taluka",
+    "receiver_pincode": "394518",
+    "special_instruction": "",
+    "order_amount": 150,
+    "delivery_status_id": 37,
+    "created_at": "2026-02-25T06:06:11.657Z",
+    "is_complete": true,
+    "urgency": "Normal",
+    "fare_breakdown": null,
+    "distance_km": null,
+    "delivery_partner_id": 10712352,
+    "sender_lat": null,
+    "sender_lng": null,
+    "receiver_lat": null,
+    "receiver_lng": null
+  }
+]
+[
+  {
+    "parcel_id": 51868894,
+    "order_id": 50771918,
+    "parcel_type_id": 1,
+    "parcel_size_id": 2,
+    "weight": null
+  },
+  {
+    "parcel_id": 51488521,
+    "order_id": 50257584,
+    "parcel_type_id": 1,
+    "parcel_size_id": 1,
+    "weight": "1.00"
+  }
+]

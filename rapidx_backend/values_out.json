@@ -1,0 +1,42 @@
+[
+  {
+    "value_id": 32,
+    "master_id": 8,
+    "value_name": "Order Placed"
+  },
+  {
+    "value_id": 33,
+    "master_id": 8,
+    "value_name": "Assigned"
+  },
+  {
+    "value_id": 34,
+    "master_id": 8,
+    "value_name": "Picked Up"
+  },
+  {
+    "value_id": 35,
+    "master_id": 8,
+    "value_name": "In Transit"
+  },
+  {
+    "value_id": 36,
+    "master_id": 8,
+    "value_name": "Out for Delivery"
+  },
+  {
+    "value_id": 37,
+    "master_id": 8,
+    "value_name": "Delivered"
+  },
+  {
+    "value_id": 38,
+    "master_id": 8,
+    "value_name": "Cancelled"
+  },
+  {
+    "value_id": 39,
+    "master_id": 8,
+    "value_name": "Returned"
+  }
+]
