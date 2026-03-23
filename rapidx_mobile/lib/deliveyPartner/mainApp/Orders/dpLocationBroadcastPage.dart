@@ -36,6 +36,7 @@ class _DPLocationBroadcastPageState extends State<DPLocationBroadcastPage> {
   String _status = "En Route to Pickup";
   bool _isLoadingRoute = true;
   bool _isMapReady = false;
+  bool _followMe = true; // 👉 New: Track whether to follow self
   Timer? _locationTimer;
 
   @override
@@ -100,12 +101,25 @@ class _DPLocationBroadcastPageState extends State<DPLocationBroadcastPage> {
           setState(() {
             _myLocation = LatLng(pos.latitude, pos.longitude);
           });
+          
+          // 👉 New: Auto-follow self if enabled
+          if (_followMe && _isMapReady && _myLocation != null) {
+            _mapController.move(_myLocation!, _mapController.camera.zoom);
+          }
           // In production: send _myLocation to backend via HTTP POST or WebSocket
         }
       } catch (e) {
         debugPrint('Location update error: $e');
       }
     });
+  }
+
+  // 👉 New: Function to manually recenter on self
+  void _recenterOnMe() {
+    if (_myLocation != null) {
+      _mapController.move(_myLocation!, 15);
+      setState(() => _followMe = true);
+    }
   }
 
   void _updateStatus(String newStatus) {
@@ -133,6 +147,12 @@ class _DPLocationBroadcastPageState extends State<DPLocationBroadcastPage> {
             options: MapOptions(
               initialCenter: widget.pickupLocation,
               initialZoom: 13,
+              // 👉 New: Disable auto-follow when user manually moves map
+              onPositionChanged: (position, hasGesture) {
+                if (hasGesture && _followMe) {
+                  setState(() => _followMe = false);
+                }
+              },
               onMapReady: () {
                 _isMapReady = true;
                 if (!_isLoadingRoute) _fitMapToRoute();
@@ -289,7 +309,18 @@ class _DPLocationBroadcastPageState extends State<DPLocationBroadcastPage> {
                 ],
               ),
             ),
-          ),
+          ), // 👈 Correct comma separation
+          // ================ RECENTER BUTTON ================
+          if (!_followMe && _myLocation != null)
+            Positioned(
+              right: 16.w,
+              bottom: 180.h, // Positioned above the status controls
+              child: FloatingActionButton(
+                onPressed: _recenterOnMe,
+                backgroundColor: const Color(0xff234C6A),
+                child: const Icon(Icons.my_location, color: Colors.white),
+              ),
+            ),
 
           // ================ BOTTOM PANEL ================
           Positioned(

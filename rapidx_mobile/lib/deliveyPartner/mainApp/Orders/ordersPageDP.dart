@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:newrapidx/api_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
@@ -15,52 +19,80 @@ class _OrdersPageState extends State<OrdersPage> {
   String selectedFilter = "Today";
   final List<String> filters = ["Today", "This Week", "This Month"];
 
-  // Mock Data
-  final List<Map<String, dynamic>> orders = [
-    {
-      "id": "OD-2402-891",
-      "date": DateTime.now().subtract(Duration(hours: 2)),
-      "pickup": "Sec 18, Noida",
-      "drop": "DLF Cyber City, Gurgaon",
-      "amount": "₹ 350",
-      "status": "Paid", // or Pending
-      "parcel": "Electronics • Small",
-      "isCompleted": true,
-    },
-    {
-      "id": "OD-2402-885",
-      "date": DateTime.now().subtract(Duration(hours: 5)),
-      "pickup": "Laxmi Nagar, Delhi",
-      "drop": "CP, New Delhi",
-      "amount": "₹ 120",
-      "status": "Paid",
-      "parcel": "Documents",
-      "isCompleted": true,
-    },
-    {
-      "id": "OD-2402-810",
-      "date": DateTime.now().subtract(Duration(days: 1)),
-      "pickup": "Noida Ext, UP",
-      "drop": "Ghaziabad, UP",
-      "amount": "₹ 210",
-      "status": "Pending",
-      "parcel": "Grocery • Medium",
-      "isCompleted": true,
-    },
-    {
-      "id": "OD-2402-755",
-      "date": DateTime.now().subtract(Duration(days: 2)),
-      "pickup": "Saket, South Delhi",
-      "drop": "Hauz Khas, Delhi",
-      "amount": "₹ 95",
-      "status": "Paid",
-      "parcel": "Medicine",
-      "isCompleted": true,
-    },
-  ];
+  List<Map<String, dynamic>> orders = [];
+  bool isLoading = true;
+
+  List<Map<String, dynamic>> get filteredOrders {
+    final now = DateTime.now();
+    return orders.where((order) {
+      final date = order['date'] as DateTime;
+      if (selectedFilter == "Today") {
+        return date.year == now.year && date.month == now.month && date.day == now.day;
+      } else if (selectedFilter == "This Week") {
+        final weekAgo = now.subtract(const Duration(days: 7));
+        return date.isAfter(weekAgo);
+      } else if (selectedFilter == "This Month") {
+        return date.year == now.year && date.month == now.month;
+      }
+      return true;
+    }).toList();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchOrders();
+  }
+
+  Future<void> _fetchOrders() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+
+      final res = await http.get(
+        Uri.parse('${ApiConstants.baseUrl}/users/delivery-partner-orders'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (res.statusCode == 200) {
+        final List<dynamic> data = json.decode(res.body);
+        final List<Map<String, dynamic>> mapped = data.map((item) {
+          final parcels = item['parcels'] as List?;
+          final parcelStr = parcels != null && parcels.isNotEmpty
+              ? "${parcels[0]['parcel_type']} • ${parcels[0]['parcel_size']}"
+              : "Standard Parcel";
+
+          return {
+            "id": item['order_id']?.toString() ?? "OD-000",
+            "date": DateTime.tryParse(item['created_at']?.toString() ?? '')?.toLocal() ?? DateTime.now(),
+            "pickup": item['sender_address']?.toString() ?? "Unknown Pickup",
+            "drop": item['receiver_address']?.toString() ?? "Unknown Drop",
+            "amount": "₹ ${item['order_amount'] ?? '0'}",
+            "status": item['is_complete'] == true ? "Paid" : "Pending",
+            "parcel": parcelStr,
+            "isCompleted": item['is_complete'] == true,
+          };
+        }).toList();
+
+        if (mounted) {
+          setState(() {
+            orders = mapped;
+            isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => isLoading = false);
+      }
+    } catch (e) {
+      debugPrint("Error fetching DP orders: $e");
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final displayOrders = filteredOrders; // 👇 use filtered list
+
     return Scaffold(
       backgroundColor: DPColors.background,
       appBar: AppBar(
@@ -74,14 +106,37 @@ class _OrdersPageState extends State<OrdersPage> {
         children: [
           _buildFilters(),
           Expanded(
-            child: ListView.separated(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
-              itemCount: orders.length,
-              separatorBuilder: (c, i) => SizedBox(height: 16.h),
-              itemBuilder: (context, index) {
-                return _buildOrderCard(orders[index]).animate().fade(duration: 400.ms, delay: (index * 100).ms).slideX(begin: 0.1, end: 0, duration: 400.ms, delay: (index * 100).ms);
-              },
-            ),
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator(color: Color(0xff234C6A)))
+                : displayOrders.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.separated(
+                        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+                        itemCount: displayOrders.length,
+                        separatorBuilder: (c, i) => SizedBox(height: 16.h),
+                        itemBuilder: (context, index) {
+                          return _buildOrderCard(displayOrders[index])
+                              .animate()
+                              .fade(duration: 400.ms, delay: (index * 100).ms)
+                              .slideX(begin: 0.1, end: 0, duration: 400.ms, delay: (index * 100).ms);
+                        },
+                      ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.history, size: 64.sp, color: Colors.grey.shade300),
+          SizedBox(height: 16.h),
+          Text(
+            "No orders yet",
+            style: DPTheme.h2.copyWith(color: Colors.grey.shade400),
           ),
         ],
       ),

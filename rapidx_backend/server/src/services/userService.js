@@ -497,7 +497,10 @@ const registerDeliveryPartner = async (
 };
 
 const login = async (email, password) => {
+  console.log(`[DEBUG] Attempting login for email: "${email}" (Password length: ${password?.length})`);
+  
   if (email === "admin" && password === "admin") {
+    console.log("[DEBUG] Handled by hardcoded 'admin' check.");
     return {
       token: "admin_token",
       role: "Admin",
@@ -515,24 +518,27 @@ const login = async (email, password) => {
     const checkUserResult = await pool.query(checkUserQuery, checkUserValues);
 
     if (checkUserResult.rowCount === 0) {
+      console.log(`[DEBUG] Login failed: User with email "${email}" not found.`);
       return false;
     }
 
     const user = checkUserResult.rows[0];
-    console.log("Login: User found:", user); // Debug log
+    console.log(`[DEBUG] User found in DB: ${user.user_id} (${user.email})`);
 
     if (user.is_banned) {
+      console.log(`[DEBUG] Login failed: User ${user.user_id} is banned.`);
       return false;
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
+      console.log(`[DEBUG] Login failed: Incorrect password for "${email}".`);
       return false;
     }
 
     const role = user.role_id;
-    console.log("Login: Role ID:", role); // Debug log
+    console.log(`[DEBUG] Login successful: User ${user.user_id}, Role ID: ${role}`);
     const token = generateJwtToken(user.user_id, user.business_id, user.email);
 
     delete user.password;
@@ -540,7 +546,7 @@ const login = async (email, password) => {
     return { token, role, user };
 
   } catch (error) {
-    console.log("Login error:", error);
+    console.error("[DEBUG] Login error during execution:", error);
     return false;
   }
 };
@@ -1057,4 +1063,33 @@ const getCustomerOrders = async (userId) => {
     }
 };
 
-module.exports = { registerCustomer, registerBusiness, registerBusinessMasterValues, registerEmployee, registerDeliveryPartner, login, createOrder, updateUserRole, getAllUsers, getAllDeliveryPartners, verifyDeliveryPartner, createDeliveryPartnerProfile, getDeliveryPartnerProfile, getPendingOrders, acceptOrder, getDPActiveOrder, updateOrderStatus, getAllOrders, getCustomerOrders };
+const getDeliveryPartnerOrders = async (dpId) => {
+    try {
+        const query = `
+            SELECT 
+                o.*,
+                vs.value_name as status_name,
+                (
+                    SELECT json_agg(json_build_object(
+                        'parcel_type', pt.value_name,
+                        'parcel_size', ps.value_name
+                    ))
+                    FROM parcels p
+                    LEFT JOIN value_master pt ON p.parcel_type_id = pt.value_id
+                    LEFT JOIN value_master ps ON p.parcel_size_id = ps.value_id
+                    WHERE p.order_id = o.order_id
+                ) as parcels
+            FROM orders o
+            LEFT JOIN value_master vs ON o.delivery_status_id = vs.value_id
+            WHERE o.delivery_partner_id = $1
+            ORDER BY o.created_at DESC
+        `;
+        const res = await pool.query(query, [dpId]);
+        return res.rows;
+    } catch (err) {
+        console.error("Error fetching delivery partner orders:", err);
+        throw err;
+    }
+};
+
+module.exports = { registerCustomer, registerBusiness, registerBusinessMasterValues, registerEmployee, registerDeliveryPartner, login, createOrder, updateUserRole, getAllUsers, getAllDeliveryPartners, verifyDeliveryPartner, createDeliveryPartnerProfile, getDeliveryPartnerProfile, getPendingOrders, acceptOrder, getDPActiveOrder, updateOrderStatus, getAllOrders, getCustomerOrders, getDeliveryPartnerOrders };

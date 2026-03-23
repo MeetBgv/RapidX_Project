@@ -38,4 +38,6 @@ router.post("/orders/:id/accept", userController.acceptOrderHandler);
 router.get("/orders/active", userController.getDPActiveOrderHandler);
 router.post("/orders/:id/status", userController.updateOrderStatusHandler);
 
+router.get("/delivery-partner-orders", userController.getDeliveryPartnerOrdersHandler);
+
 module.exports = router;

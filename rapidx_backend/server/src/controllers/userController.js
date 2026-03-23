@@ -329,6 +329,26 @@ const getCustomerOrdersHandler = async (req, res) => {
     }
 };
 
+const getDeliveryPartnerOrdersHandler = async (req, res) => {
+    try {
+        const bearerToken = req.headers.authorization;
+        if (!bearerToken || !bearerToken.startsWith('Bearer ')) {
+            return res.status(401).json('Unauthorized');
+        }
+        const authToken = bearerToken.split(' ')[1];
+        const jwt = require('jsonwebtoken');
+        const payload = jwt.decode(authToken);
+        const userId = payload?.userId;
+        if (!userId) return res.status(401).json('Invalid token');
+
+        const orders = await userService.getDeliveryPartnerOrders(userId);
+        res.status(200).json(orders);
+    } catch (error) {
+        console.error('Error fetching delivery partner orders:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
 module.exports = {
     registerCustomer,
     registerBusiness,
@@ -349,5 +369,6 @@ module.exports = {
     getDPActiveOrderHandler,
     updateOrderStatusHandler,
     getAllOrdersHandler,
-    getCustomerOrdersHandler
+    getCustomerOrdersHandler,
+    getDeliveryPartnerOrdersHandler
 };

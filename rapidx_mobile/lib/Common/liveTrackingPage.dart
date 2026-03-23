@@ -45,6 +45,7 @@ class _LiveTrackingPageState extends State<LiveTrackingPage> {
   String _orderStatus = "Picked Up";
   bool _isLoadingRoute = true;
   bool _isMapReady = false;
+  bool _followPartner = true; // 👉 New: Track whether to follow partner
   Timer? _pollingTimer;
 
   @override
@@ -128,6 +129,19 @@ class _LiveTrackingPageState extends State<LiveTrackingPage> {
       setState(() {
         _partnerLocation = _routePoints[_routeIndex];
       });
+
+      // 👉 New: Auto-follow partner if enabled
+      if (_followPartner && _isMapReady) {
+        _mapController.move(_partnerLocation!, _mapController.camera.zoom);
+      }
+    }
+  }
+
+  // 👉 New: Function to manually recenter on partner
+  void _recenterOnPartner() {
+    if (_partnerLocation != null) {
+      _mapController.move(_partnerLocation!, 15);
+      setState(() => _followPartner = true);
     }
   }
 
@@ -151,6 +165,12 @@ class _LiveTrackingPageState extends State<LiveTrackingPage> {
             options: MapOptions(
               initialCenter: widget.senderLocation,
               initialZoom: 13,
+              // 👉 New: Disable auto-follow when user manually moves map
+              onPositionChanged: (position, hasGesture) {
+                if (hasGesture && _followPartner) {
+                  setState(() => _followPartner = false);
+                }
+              },
               onMapReady: () {
                 _isMapReady = true;
                 if (!_isLoadingRoute) _fitMapToRoute();
@@ -278,10 +298,21 @@ class _LiveTrackingPageState extends State<LiveTrackingPage> {
                       color: const Color(0xff234C6A),
                     ),
                   ),
-                ),
               ),
             ),
           ),
+        ), // 👈 CLEANED UP COMMA SEPARATION
+          // ================ RECENTER BUTTON ================
+          if (!_followPartner && _partnerLocation != null)
+            Positioned(
+              right: 16.w,
+              bottom: 300.h, // Adjusted to be above the bottom card
+              child: FloatingActionButton(
+                onPressed: _recenterOnPartner,
+                backgroundColor: const Color(0xff234C6A),
+                child: const Icon(Icons.my_location, color: Colors.white),
+              ),
+            ),
 
           // ================ BOTTOM INFO CARD ================
           Positioned(
