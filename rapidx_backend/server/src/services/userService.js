@@ -1059,7 +1059,19 @@ const getCustomerOrders = async (userId) => {
                 dp.last_name as dp_last_name,
                 dp.phone as dp_phone,
                 dp.current_lat, dp.current_lng,
-                vs.value_name as status_name
+                vs.value_name as status_name,
+                (
+                    SELECT json_agg(json_build_object(
+                        'parcel_id', p.parcel_id,
+                        'parcel_type', pt.value_name,
+                        'parcel_size', ps.value_name,
+                        'weight', p.weight
+                    ))
+                    FROM parcels p
+                    LEFT JOIN value_master pt ON p.parcel_type_id = pt.value_id
+                    LEFT JOIN value_master ps ON p.parcel_size_id = ps.value_id
+                    WHERE p.order_id = o.order_id
+                ) as parcels
             FROM orders o
             LEFT JOIN users u ON o.sender_id = u.user_id
             LEFT JOIN users dp ON o.delivery_partner_id = dp.user_id

@@ -120,6 +120,14 @@ class ordersAppState extends State<ordersApp> {
             "senderLocation": LatLng(lat1 != 0 ? lat1 : 28.7041, lng1 != 0 ? lng1 : 77.1025),
             "receiverLocation": LatLng(lat2 != 0 ? lat2 : 28.5355, lng2 != 0 ? lng2 : 77.3910),
             "partnerLocation": latP != 0 ? LatLng(latP, lngP) : null,
+            // 👉 Expanded details for bottom sheet
+            "senderName": item['sender_name'] ?? "N/A",
+            "receiverName": item['receiver_name'] ?? "N/A",
+            "senderAddress": item['sender_address'] ?? "N/A",
+            "receiverAddress": item['receiver_address'] ?? "N/A",
+            "amount": item['order_amount']?.toString() ?? "0",
+            "urgency": item['urgency'] ?? "N/A",
+            "parcels": item['parcels'] as List? ?? [],
           };
 
           if (isComplete) {
@@ -375,20 +383,24 @@ class ordersAppState extends State<ordersApp> {
   Widget _buildOrderCard(Map<String, dynamic> order, bool isLive) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => LiveTrackingPage(
-              senderLocation: order["senderLocation"] as LatLng,
-              receiverLocation: order["receiverLocation"] as LatLng,
-              partnerName: order["partnerName"] as String,
-              partnerPhone: order["partnerPhone"] as String,
-              orderId: order["orderId"] as String,
-              status: order["status"] as String,
-              initialPartnerLocation: order["partnerLocation"] as LatLng?,
+        if (isLive) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => LiveTrackingPage(
+                senderLocation: order["senderLocation"] as LatLng,
+                receiverLocation: order["receiverLocation"] as LatLng,
+                partnerName: order["partnerName"] as String,
+                partnerPhone: order["partnerPhone"] as String,
+                orderId: order["orderId"] as String,
+                status: order["status"] as String,
+                initialPartnerLocation: order["partnerLocation"] as LatLng?,
+              ),
             ),
-          ),
-        );
+          );
+        } else {
+          _showOrderDetails(order);
+        }
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 12.h),
@@ -525,5 +537,161 @@ class ordersAppState extends State<ordersApp> {
       ),
     );
   }
+  void _showOrderDetails(Map<String, dynamic> order) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.75,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
+          ),
+          child: Column(
+            children: [
+              SizedBox(height: 12.h),
+              Container(
+                width: 40.w,
+                height: 4.h,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  padding: EdgeInsets.all(24.w),
+                  children: [
+                    Text(
+                      "Order Summary",
+                      style: GoogleFonts.baloo2(
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xff234C6A),
+                      ),
+                    ),
+                    SizedBox(height: 24.h),
+                    
+                    _detailSection("Sender Details", [
+                      _detailRow(Icons.person, "Name", order["senderName"]),
+                      _detailRow(Icons.location_on, "Address", order["senderAddress"]),
+                    ]),
+                    
+                    SizedBox(height: 20.h),
+                    _detailSection("Receiver Details", [
+                      _detailRow(Icons.person, "Name", order["receiverName"]),
+                      _detailRow(Icons.location_on, "Address", order["receiverAddress"]),
+                    ]),
+                    
+                    SizedBox(height: 20.h),
+                    _detailSection("Parcel Information", (order["parcels"] as List).map((p) {
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: 8.h),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "${p['parcel_type']} (${p['parcel_size']})",
+                              style: GoogleFonts.baloo2(fontSize: 14.sp),
+                            ),
+                            Text(
+                                "${p['weight']} kg",
+                                style: GoogleFonts.baloo2(fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList()),
+                    
+                    SizedBox(height: 20.h),
+                    _detailSection("Payment & Partner", [
+                      _detailRow(Icons.currency_rupee, "Total Amount", "₹${order["amount"]}"),
+                      _detailRow(Icons.delivery_dining, "Delivered By", order["partnerName"]),
+                      if (order["partnerPhone"].isNotEmpty)
+                        _detailRow(Icons.phone, "Partner Contact", order["partnerPhone"]),
+                    ]),
+                    
+                    SizedBox(height: 32.h),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _detailSection(String title, dynamic children) {
+    List<Widget> childrenList = [];
+    if (children is List<Widget>) {
+      childrenList = children;
+    } else if (children is Iterable<Widget>) {
+      childrenList = children.toList();
+    }
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.baloo2(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xff56A3A6),
+          ),
+        ),
+        SizedBox(height: 12.h),
+        Container(
+          padding: EdgeInsets.all(16.w),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade100),
+          ),
+          child: Column(children: childrenList),
+        ),
+      ],
+    );
+  }
+
+  Widget _detailRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 10.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 16.sp, color: const Color(0xff234C6A).withOpacity(0.6)),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.baloo2(
+                    fontSize: 11.sp,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: GoogleFonts.baloo2(
+                    fontSize: 14.sp,
+                    color: const Color(0xff234C6A),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
 
