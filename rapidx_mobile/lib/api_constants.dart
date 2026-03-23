@@ -17,12 +17,17 @@ class ApiConstants {
   // Note: Your Wi-Fi IP (192.168.29.36) usually works for BOTH emulator and physical device!
   static const bool isPhysicalDevice = false;
 
+  static const String vercelUrl = 'https://rapid-x-project.vercel.app/api';
+
   static String get baseUrl {
+    return vercelUrl;
+    // For local testing, you can uncomment this:
+    /*
     if (kIsWeb) {
       return 'http://localhost:3000/api';
     }
-
     final String targetIP = isPhysicalDevice ? wifiIP : emulatorIP;
     return 'http://$targetIP:3000/api';
+    */
   }
 }

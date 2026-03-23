@@ -7,10 +7,13 @@ import 'package:lottie/lottie.dart';
 import 'package:dotlottie_loader/dotlottie_loader.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import 'package:flutter/services.dart';
 import '../../../services/location_service.dart';
 import '../ordersApp/ordesApp.dart';
 import '../profileApp/profileApp.dart';
 import '../ordersApp/UI/placeOrderBottomSheet.dart';
+import 'walletPage.dart';
+import '../profileApp/helpBottomSheet.dart';
 
 class homeApp extends StatefulWidget {
   const homeApp({super.key});
@@ -21,116 +24,155 @@ class homeApp extends StatefulWidget {
 
 class _homeAppState extends State<homeApp> {
   int currentIndex = 0;
+  int ordersInitialIndex = 0;
+  final GlobalKey<ordersAppState> _ordersKey = GlobalKey<ordersAppState>();
 
-  final List<Widget> pages = const [HomeContent(), ordersApp(), profileApp()];
+  late final List<Widget> pages;
+
+  @override
+  void initState() {
+    super.initState();
+    pages = [
+      HomeContent(onNavigate: _navigateToTab),
+      ordersApp(key: _ordersKey, initialIndex: ordersInitialIndex),
+      profileApp()
+    ];
+  }
+
+  void _navigateToTab(int tabIndex, int subTabIndex) {
+    setState(() {
+      currentIndex = tabIndex;
+      if (tabIndex == 1) {
+        ordersInitialIndex = subTabIndex;
+        _ordersKey.currentState?.setTab(subTabIndex);
+      }
+    });
+  }
+
+  Future<bool> _showExitDialog() async {
+    return await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+            title: Text("Quit Application",
+                style: GoogleFonts.baloo2(fontWeight: FontWeight.bold, color: const Color(0xff234C6A))),
+            content: Text("Do you want to quit the application?",
+                style: GoogleFonts.baloo2(color: Colors.grey.shade700)),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text("No", style: GoogleFonts.baloo2(color: Colors.grey, fontWeight: FontWeight.w600)),
+              ),
+              TextButton(
+                onPressed: () => SystemNavigator.pop(),
+                child: Text("Yes", style: GoogleFonts.baloo2(color: Colors.red, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      extendBodyBehindAppBar: true,
-
-      body: IndexedStack(index: currentIndex, children: pages),
-
-      bottomNavigationBar: BottomAppBar(
-        color: const Color(0xffF2F2F2),
-
-        child: SizedBox(
-          height: 60.h,
-
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              // Home
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    currentIndex = 0;
-                  });
-                },
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.home_outlined,
-                      color: currentIndex == 0
-                          ? const Color(0xffDE9325)
-                          : Colors.grey,
-                    ),
-                    Text(
-                      "Home",
-                      style: GoogleFonts.baloo2(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w500,
-                        color: currentIndex == 0
-                            ? const Color(0xffDE9325)
-                            : Colors.grey,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await _showExitDialog();
+        if (shouldPop && context.mounted) {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        extendBodyBehindAppBar: true,
+        body: IndexedStack(index: currentIndex, children: pages),
+        bottomNavigationBar: BottomAppBar(
+          color: const Color(0xffF2F2F2),
+          child: SizedBox(
+            height: 60.h,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                // Home
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      currentIndex = 0;
+                    });
+                  },
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.home_outlined,
+                        color: currentIndex == 0 ? const Color(0xffDE9325) : Colors.grey,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Orders
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    currentIndex = 1;
-                  });
-                },
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.delivery_dining_outlined,
-                      color: currentIndex == 1
-                          ? const Color(0xffDE9325)
-                          : Colors.grey,
-                    ),
-                    Text(
-                      "Orders",
-                      style: GoogleFonts.baloo2(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w500,
-                        color: currentIndex == 1
-                            ? const Color(0xffDE9325)
-                            : Colors.grey,
+                      Text(
+                        "Home",
+                        style: GoogleFonts.baloo2(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w500,
+                          color: currentIndex == 0 ? const Color(0xffDE9325) : Colors.grey,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-
-              // Profile
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    currentIndex = 2;
-                  });
-                },
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.person_2_outlined,
-                      color: currentIndex == 2
-                          ? const Color(0xffDE9325)
-                          : Colors.grey,
-                    ),
-                    Text(
-                      "Profile",
-                      style: GoogleFonts.baloo2(
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.w500,
-                        color: currentIndex == 2
-                            ? const Color(0xffDE9325)
-                            : Colors.grey,
+                // Orders
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      currentIndex = 1;
+                    });
+                  },
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.delivery_dining_outlined,
+                        color: currentIndex == 1 ? const Color(0xffDE9325) : Colors.grey,
                       ),
-                    ),
-                  ],
+                      Text(
+                        "Orders",
+                        style: GoogleFonts.baloo2(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w500,
+                          color: currentIndex == 1 ? const Color(0xffDE9325) : Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                // Profile
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      currentIndex = 2;
+                    });
+                  },
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.person_2_outlined,
+                        color: currentIndex == 2 ? const Color(0xffDE9325) : Colors.grey,
+                      ),
+                      Text(
+                        "Profile",
+                        style: GoogleFonts.baloo2(
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.w500,
+                          color: currentIndex == 2 ? const Color(0xffDE9325) : Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -141,7 +183,8 @@ class _homeAppState extends State<homeApp> {
 // ---------------- HOME CONTENT ----------------
 
 class HomeContent extends StatefulWidget {
-  const HomeContent({super.key});
+  final Function(int tabIndex, int subTabIndex)? onNavigate;
+  const HomeContent({super.key, this.onNavigate});
 
   @override
   State<HomeContent> createState() => _HomeContentState();
@@ -614,6 +657,15 @@ class _HomeContentState extends State<HomeContent>
               onTap: () {
                 if (action['label'] == 'Send Parcel') {
                   _showOrderBottomSheet();
+                } else if (action['label'] == 'History') {
+                  widget.onNavigate?.call(1, 1);
+                } else if (action['label'] == 'Wallet') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const WalletPage()),
+                  );
+                } else if (action['label'] == 'Support') {
+                  showHelpSupportBottomSheet(context);
                 }
               },
               borderRadius: BorderRadius.circular(16.r),

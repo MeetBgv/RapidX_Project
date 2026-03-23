@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:newrapidx/api_constants.dart';
@@ -13,15 +14,22 @@ import 'package:newrapidx/Common/liveTrackingPage.dart';
 import '../homeApp/homeApp.dart';
 
 class ordersApp extends StatefulWidget {
-  const ordersApp({super.key});
+  final int initialIndex;
+  const ordersApp({super.key, this.initialIndex = 0});
 
   @override
-  State<ordersApp> createState() => _ordersAppState();
+  State<ordersApp> createState() => ordersAppState();
 }
 
-class _ordersAppState extends State<ordersApp> {
+class ordersAppState extends State<ordersApp> {
   // 👉 Controls which tab is selected (0,1,2)
-  int selectedIndex = 0;
+  late int selectedIndex;
+
+  void setTab(int index) {
+    setState(() {
+      selectedIndex = index;
+    });
+  }
 
   // 👉 Names of the tabs
   final List<String> tabs = ["Current Orders", "Order History"];
@@ -30,22 +38,53 @@ class _ordersAppState extends State<ordersApp> {
   List<Map<String, dynamic>> _liveOrders = [];
   List<Map<String, dynamic>> _pastOrders = [];
   bool _isLoading = true;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
+    selectedIndex = widget.initialIndex;
     _fetchOrders();
+    _startPolling();
   }
 
-  Future<void> _fetchOrders() async {
+  void _startPolling() {
+    _timer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (mounted) {
+        _fetchOrders(showLoading: false);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant ordersApp oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialIndex != widget.initialIndex) {
+      selectedIndex = widget.initialIndex;
+    }
+  }
+
+  Future<void> _fetchOrders({bool showLoading = true}) async {
     try {
+      if (showLoading && mounted) {
+        setState(() => _isLoading = true);
+      }
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token') ?? '';
 
       final res = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/users/customer-orders'),
+        Uri.parse('${ApiConstants.baseUrl}/users/customer-orders?t=${DateTime.now().millisecondsSinceEpoch}'),
         headers: {'Authorization': 'Bearer $token'},
       );
+
+      debugPrint("Orders API Response code: ${res.statusCode}");
+      // debugPrint("Orders API Response body: ${res.body}");
 
       if (res.statusCode == 200) {
         final List<dynamic> data = json.decode(res.body);
@@ -69,6 +108,9 @@ class _ordersAppState extends State<ordersApp> {
             }
           }
 
+          final latP = double.tryParse(item['current_lat']?.toString() ?? '0') ?? 0;
+          final lngP = double.tryParse(item['current_lng']?.toString() ?? '0') ?? 0;
+
           final orderObj = {
             "orderId": item['order_id']?.toString() ?? "",
             "status": item['status_name'] ?? "Pending",
@@ -77,6 +119,7 @@ class _ordersAppState extends State<ordersApp> {
             "partnerPhone": item['dp_phone']?.toString() ?? "",
             "senderLocation": LatLng(lat1 != 0 ? lat1 : 28.7041, lng1 != 0 ? lng1 : 77.1025),
             "receiverLocation": LatLng(lat2 != 0 ? lat2 : 28.5355, lng2 != 0 ? lng2 : 77.3910),
+            "partnerLocation": latP != 0 ? LatLng(latP, lngP) : null,
           };
 
           if (isComplete) {
@@ -128,28 +171,32 @@ class _ordersAppState extends State<ordersApp> {
           ),
 
           // ================= MAIN SCROLL VIEW =================
-          ListView(
-            // 👉 Change screen padding here
-            padding: EdgeInsets.only(
-              top: 65.h, // Space below AppBar
-              left: 10.w, // Left margin
-              right: 10.w, // Right margin
-              bottom: 10.h, // Bottom margin
+          RefreshIndicator(
+            onRefresh: () => _fetchOrders(showLoading: false),
+            color: const Color(0xff234C6A),
+            child: ListView(
+              // 👉 Change screen padding here
+              padding: EdgeInsets.only(
+                top: 65.h, // Space below AppBar
+                left: 10.w, // Left margin
+                right: 10.w, // Right margin
+                bottom: 10.h, // Bottom margin
+              ),
+
+              children: [
+                // 👉 Space before tabs
+                SizedBox(height: 5.h),
+
+                // Tabs row
+                _buildTabs(),
+
+                // 👉 Space after tabs
+                SizedBox(height: 10.h),
+
+                // Page content
+                _buildContent(),
+              ],
             ),
-
-            children: [
-              // 👉 Space before tabs
-              SizedBox(height: 5.h),
-
-              // Tabs row
-              _buildTabs(),
-
-              // 👉 Space after tabs
-              SizedBox(height: 10.h),
-
-              // Page content
-              _buildContent(),
-            ],
           ),
 
           // ================= APP BAR =================
@@ -338,6 +385,7 @@ class _ordersAppState extends State<ordersApp> {
               partnerPhone: order["partnerPhone"] as String,
               orderId: order["orderId"] as String,
               status: order["status"] as String,
+              initialPartnerLocation: order["partnerLocation"] as LatLng?,
             ),
           ),
         );

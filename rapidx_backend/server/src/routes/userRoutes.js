@@ -19,6 +19,7 @@ router.post("/create/order", userController.createOrder);
 router.post("/update-role", userController.updateUserRole);
 
 router.post("/calculate-price", userController.calculatePriceHandler);
+router.post("/location", userController.updateUserLocationHandler);
 
 router.get("/all", userController.getAllUsers);
 

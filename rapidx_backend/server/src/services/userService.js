@@ -718,6 +718,17 @@ const updateUserRole = async (phone, role_id) => {
   }
 };
 
+const updateUserLocation = async (userId, lat, lng) => {
+  try {
+    const query = `UPDATE users SET current_lat = $1, current_lng = $2 WHERE user_id = $3`;
+    const result = await pool.query(query, [lat, lng, userId]);
+    return result.rowCount > 0;
+  } catch (error) {
+    console.log("Error updating user location:", error);
+    return false;
+  }
+};
+
 const getAllUsers = async () => {
   try {
     const query = `
@@ -1047,6 +1058,7 @@ const getCustomerOrders = async (userId) => {
                 dp.first_name as dp_first_name,
                 dp.last_name as dp_last_name,
                 dp.phone as dp_phone,
+                dp.current_lat, dp.current_lng,
                 vs.value_name as status_name
             FROM orders o
             LEFT JOIN users u ON o.sender_id = u.user_id
@@ -1092,4 +1104,4 @@ const getDeliveryPartnerOrders = async (dpId) => {
     }
 };
 
-module.exports = { registerCustomer, registerBusiness, registerBusinessMasterValues, registerEmployee, registerDeliveryPartner, login, createOrder, updateUserRole, getAllUsers, getAllDeliveryPartners, verifyDeliveryPartner, createDeliveryPartnerProfile, getDeliveryPartnerProfile, getPendingOrders, acceptOrder, getDPActiveOrder, updateOrderStatus, getAllOrders, getCustomerOrders, getDeliveryPartnerOrders };
+module.exports = { registerCustomer, registerBusiness, registerBusinessMasterValues, registerEmployee, registerDeliveryPartner, login, createOrder, updateUserRole, updateUserLocation, getAllUsers, getAllDeliveryPartners, verifyDeliveryPartner, createDeliveryPartnerProfile, getDeliveryPartnerProfile, getPendingOrders, acceptOrder, getDPActiveOrder, updateOrderStatus, getAllOrders, getCustomerOrders, getDeliveryPartnerOrders };

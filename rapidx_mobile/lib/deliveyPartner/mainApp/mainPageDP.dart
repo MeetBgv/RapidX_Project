@@ -17,12 +17,16 @@ class mainPageDP extends ConsumerStatefulWidget {
 
 class _mainPageDPState extends ConsumerState<mainPageDP> {
   int _currentIndex = 0;
-
-  final List<Widget> _pages = [HomePageDP(), OrdersPage(), ProfilePageDP()];
+  final List<Widget> _pages = [];
 
   @override
   void initState() {
     super.initState();
+    _pages.addAll([
+      HomePageDP(onHistoryTap: () => setState(() => _currentIndex = 1)),
+      const OrdersPage(),
+      const ProfilePageDP(),
+    ]);
     _fetchProfileData();
   }
 

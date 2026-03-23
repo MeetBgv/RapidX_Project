@@ -141,6 +141,31 @@ const calculatePriceHandler = async (req, res) => {
     }
 };
 
+const updateUserLocationHandler = async (req, res) => {
+    try {
+        const { lat, lng } = req.body;
+        const bearerToken = req.headers.authorization;
+        if (!bearerToken || !bearerToken.startsWith('Bearer ')) {
+            return res.status(401).json('Unauthorized');
+        }
+        const authToken = bearerToken.split(' ')[1];
+        const jwt = require('jsonwebtoken');
+        const payload = jwt.decode(authToken);
+        const userId = payload?.userId;
+        if (!userId) return res.status(401).json('Invalid token');
+
+        const success = await userService.updateUserLocation(userId, lat, lng);
+        if (success) {
+            res.status(200).json({ message: "Location updated" });
+        } else {
+            res.status(400).json({ error: "Failed to update location" });
+        }
+    } catch (error) {
+        console.error("Error in updateUserLocationHandler:", error);
+        res.status(500).json({ error: "Server error" });
+    }
+};
+
 const getAllUsers = async (req, res) => {
     try {
         const users = await userService.getAllUsers();
@@ -359,6 +384,7 @@ module.exports = {
     createOrder,
     updateUserRole,
     calculatePriceHandler,
+    updateUserLocationHandler,
     getAllUsers,
     getAllDeliveryPartners,
     verifyDeliveryPartner,

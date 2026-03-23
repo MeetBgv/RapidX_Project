@@ -18,7 +18,8 @@ import 'order_notification_overlay.dart';
 import 'dp_navigation_page.dart';
 
 class HomePageDP extends ConsumerStatefulWidget {
-  const HomePageDP({Key? key}) : super(key: key);
+  final VoidCallback? onHistoryTap;
+  const HomePageDP({Key? key, this.onHistoryTap}) : super(key: key);
 
   @override
   ConsumerState<HomePageDP> createState() => _HomePageDPState();
@@ -28,6 +29,7 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
   // ─── Online/Offline ─────────────────────────────────────────────────
   bool _isOnline = false;
   Timer? _pollingTimer;
+  Timer? _locationTimer;
 
   // ─── Active Order ────────────────────────────────────────────────────
   Map<String, dynamic>? _activeOrder;
@@ -45,6 +47,7 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
   @override
   void dispose() {
     _pollingTimer?.cancel();
+    _locationTimer?.cancel();
     super.dispose();
   }
 
@@ -53,8 +56,10 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
     setState(() => _isOnline = !_isOnline);
     if (_isOnline) {
       _startPolling();
+      _startLocationUpdates();
     } else {
       _pollingTimer?.cancel();
+      _locationTimer?.cancel();
     }
   }
 
@@ -67,6 +72,42 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
     });
     // Also check immediately
     _checkForNewOrder();
+  }
+
+  // ─── Location Updates ───────────────────────────────────────────────
+  void _startLocationUpdates() {
+    _locationTimer?.cancel();
+    _locationTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (!mounted || !_isOnline) return;
+      _updateLiveLocation();
+    });
+    // Initial update
+    _updateLiveLocation();
+  }
+
+  Future<void> _updateLiveLocation() async {
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+      
+      await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/users/location'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'lat': position.latitude,
+          'lng': position.longitude,
+        }),
+      );
+    } catch (e) {
+      debugPrint('Location update error: $e');
+    }
   }
 
   Future<void> _checkForNewOrder() async {
@@ -180,10 +221,12 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
       );
       if (!mounted) return;
       if (res.statusCode == 200) {
-        final updated = json.decode(res.body) as Map<String, dynamic>;
-        setState(() => _activeOrder = updated);
         if (statusName == 'Delivered') {
+          setState(() => _activeOrder = null);
           _showSnack('Order delivered! Great job 🎉');
+        } else {
+          final updated = json.decode(res.body) as Map<String, dynamic>;
+          setState(() => _activeOrder = updated);
         }
       }
     } catch (e) {
@@ -351,13 +394,20 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: DPColors.greyExtraLight,
-            image: DecorationImage(
-              image: dpState.profilePicturePath.isNotEmpty
-                  ? FileImage(File(dpState.profilePicturePath)) as ImageProvider
-                  : const AssetImage('assets/images/DoodleProfileBack.png'),
-              fit: BoxFit.cover,
-            ),
+            image: dpState.profilePicturePath.isNotEmpty
+                ? DecorationImage(
+                    image: FileImage(File(dpState.profilePicturePath)),
+                    fit: BoxFit.cover,
+                  )
+                : null,
           ),
+          child: dpState.profilePicturePath.isEmpty
+              ? Icon(
+                  Icons.person,
+                  size: 28.sp,
+                  color: DPColors.greyMedium,
+                )
+              : null,
         ),
         SizedBox(width: 16.w),
         Expanded(
@@ -867,7 +917,8 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
 
   Widget _buildQuickActionRow() {
     final items = [
-      (_quickActionItem(Icons.history_rounded, 'History', () {})),
+      (_quickActionItem(
+          Icons.history_rounded, 'History', widget.onHistoryTap ?? () {})),
       (_quickActionItem(Icons.headset_mic_outlined, 'Support', () {})),
       (_quickActionItem(
           Icons.account_balance_wallet_outlined, 'Wallet', () {})),

@@ -1,4 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:newrapidx/api_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,6 +25,7 @@ class LiveTrackingPage extends StatefulWidget {
   final String partnerPhone;
   final String orderId;
   final String status;
+  final LatLng? initialPartnerLocation;
 
   const LiveTrackingPage({
     super.key,
@@ -29,7 +34,8 @@ class LiveTrackingPage extends StatefulWidget {
     this.partnerName = "Delivery Partner",
     this.partnerPhone = "",
     this.orderId = "",
-    this.status = "Picked Up",
+    this.status = "Assigned",
+    this.initialPartnerLocation,
   });
 
   @override
@@ -52,12 +58,11 @@ class _LiveTrackingPageState extends State<LiveTrackingPage> {
   void initState() {
     super.initState();
     _mapController = MapController();
-    _partnerLocation = widget.senderLocation; // Start at sender
+    // Start at initial location or sender
+    _partnerLocation = widget.initialPartnerLocation ?? widget.senderLocation;
     _orderStatus = widget.status;
     _loadRoute();
-    if (_orderStatus != "Delivered") {
-      _startPolling();
-    }
+    _startPolling();
   }
 
   Future<void> _loadRoute() async {
@@ -107,37 +112,57 @@ class _LiveTrackingPageState extends State<LiveTrackingPage> {
     );
   }
 
-  /// Placeholder polling — replace with WebSocket in production.
+  /// Real polling to fetch partner location and order status from the backend.
   void _startPolling() {
-    _pollingTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      // In production: fetch delivery partner's location from backend
-      // For now, simulate movement along the route
-      _simulatePartnerMovement();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+      if (!mounted) return;
+      await _fetchLiveUpdates();
     });
   }
 
-  int _routeIndex = 0;
-  void _simulatePartnerMovement() {
-    if (_routePoints.isEmpty) return;
-    _routeIndex += 3; // Move 3 points forward
-    if (_routeIndex >= _routePoints.length) {
-      _routeIndex = _routePoints.length - 1;
-      _orderStatus = "Delivered";
-      _pollingTimer?.cancel();
-    }
-    if (mounted) {
-      setState(() {
-        _partnerLocation = _routePoints[_routeIndex];
-      });
+  Future<void> _fetchLiveUpdates() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+      
+      final res = await http.get(
+        Uri.parse('${ApiConstants.baseUrl}/users/customer-orders?t=${DateTime.now().millisecondsSinceEpoch}'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
 
-      // 👉 New: Auto-follow partner if enabled
-      if (_followPartner && _isMapReady) {
-        _mapController.move(_partnerLocation!, _mapController.camera.zoom);
+      if (res.statusCode == 200) {
+        final List<dynamic> data = json.decode(res.body);
+        final order = data.firstWhere(
+          (o) => o['order_id'].toString() == widget.orderId,
+          orElse: () => null,
+        );
+
+        if (order != null && mounted) {
+          final lat = double.tryParse(order['current_lat']?.toString() ?? '');
+          final lng = double.tryParse(order['current_lng']?.toString() ?? '');
+          final status = order['status_name']?.toString() ?? _orderStatus;
+
+          setState(() {
+            if (lat != null && lng != null) {
+              _partnerLocation = LatLng(lat, lng);
+            }
+            _orderStatus = status;
+          });
+
+          if (_followPartner && _isMapReady && _partnerLocation != null) {
+            _mapController.move(_partnerLocation!, _mapController.camera.zoom);
+          }
+
+          if (_orderStatus == "Delivered") {
+            _pollingTimer?.cancel();
+          }
+        }
       }
+    } catch (e) {
+      debugPrint("Live update fetch error: $e");
     }
   }
 
-  // 👉 New: Function to manually recenter on partner
   void _recenterOnPartner() {
     if (_partnerLocation != null) {
       _mapController.move(_partnerLocation!, 15);
