@@ -13,3 +13,5 @@ app.listen(port, async () => {
         console.error("Failed to connect to database:", err.message);
     }
 });
+
+module.exports = app;
