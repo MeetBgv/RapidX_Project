@@ -860,9 +860,47 @@ const updateOrderStatus = async (orderId, dpId, statusName) => {
       WHERE order_id = $3 AND delivery_partner_id = $4
       RETURNING *
     `, [statusName, isComplete, orderId, dpId]);
+
+    if (result.rowCount > 0) {
+      // Log the change for tracking
+      await pool.query(`
+        INSERT INTO order_status_history (order_id, delivery_status_id, updating_partner_id, updated_at)
+        VALUES ($1, (SELECT value_id FROM value_master WHERE value_name = $2), $3, NOW())
+      `, [orderId, statusName, dpId]);
+    }
+
     return result.rows[0] ?? null;
   } catch (error) {
     console.error('Error updating order status:', error);
+    return null;
+  }
+};
+
+const adminUpdateOrderStatus = async (orderId, statusName) => {
+  try {
+    const isComplete = statusName === 'Delivered';
+    const result = await pool.query(`
+      UPDATE orders
+      SET delivery_status_id = (SELECT value_id FROM value_master WHERE value_name = $1),
+          is_complete = $2
+      WHERE order_id = $3
+      RETURNING *
+    `, [statusName, isComplete, orderId]);
+
+    if (result.rowCount > 0) {
+      // Log the change for tracking
+      // userId is null for admin updates but since the schema expects 'updating_partner_id' (which is just a user_id)...
+      // We'll leave it NULL or find out if there's an admin user_id. 
+      // Hardcoded admin doesn't have a DB user entry usually, but let's check.
+      await pool.query(`
+        INSERT INTO order_status_history (order_id, delivery_status_id, updating_partner_id, updated_at)
+        VALUES ($1, (SELECT value_id FROM value_master WHERE value_name = $2), NULL, NOW())
+      `, [orderId, statusName]);
+    }
+
+    return result.rows[0] ?? null;
+  } catch (error) {
+    console.error('Error in adminUpdateOrderStatus:', error);
     return null;
   }
 };
@@ -1230,6 +1268,7 @@ module.exports = {
     getCustomerOrders, 
     getDeliveryPartnerOrders,
     getDashboardStats,
-    getAllBusinesses
+    getAllBusinesses,
+    adminUpdateOrderStatus
 };
 

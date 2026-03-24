@@ -9,7 +9,7 @@ const Orders = () => {
     const fetchOrders = async (showLoading = true) => {
         if (showLoading) setLoading(true);
         try {
-            const res = await fetch('http://localhost:3000/api/users/orders');
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/orders`);
             if (res.ok) {
                 const data = await res.json();
                 setOrders(data);
@@ -18,6 +18,36 @@ const Orders = () => {
             console.error('Error fetching orders:', error);
         } finally {
             if (showLoading) setLoading(false);
+        }
+    };
+
+    const handleStatusUpdate = async (orderId, newStatus) => {
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/orders/${orderId}/status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer admin_token' // Using the hardcoded admin_token for now
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            if (res.ok) {
+                const updatedOrder = await res.json();
+                // Update local orders list
+                setOrders(orders.map(o => o.order_id === orderId ? { ...o, ...updatedOrder, status_name: newStatus } : o));
+                // Update selected order view if it matches
+                if (selectedOrder && selectedOrder.order_id === orderId) {
+                    setSelectedOrder({ ...selectedOrder, ...updatedOrder, status_name: newStatus });
+                }
+                alert(`Order #${orderId} status updated to ${newStatus}`);
+            } else {
+                const err = await res.json();
+                alert(`Error: ${err.error || 'Failed to update status'}`);
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+            alert('Failed to update status. Please try again.');
         }
     };
 
@@ -101,6 +131,37 @@ const Orders = () => {
                                 <div className="info-row"><span className="info-label">Order Placed</span><span className="info-value">{formatDate(order.created_at)}</span></div>
                                 <div className="info-row"><span className="info-label">Current Status</span><span className="info-value" style={{ fontWeight: 'bold' }}>{order.status_name || 'Pending'}</span></div>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Admin Status Controls */}
+                    <div className="panel" style={{ gridColumn: 'span 2', border: '1px solid var(--border-light)', background: 'rgba(59, 130, 246, 0.05)' }}>
+                        <h3 className="panel-title" style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Edit2 size={16} /> Admin Status Controls
+                        </h3>
+                        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+                            Manage the delivery lifecycle of this order manually. Changes are tracked immediately.
+                        </p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                            {['Order Placed', 'Assigned', 'Picked Up', 'In Transit', 'Out for Delivery', 'Delivered', 'Cancelled', 'Returned'].map((status) => (
+                                <button
+                                    key={status}
+                                    className={`primary-btn ${order.status_name === status ? 'active' : ''}`}
+                                    onClick={() => handleStatusUpdate(order.order_id, status)}
+                                    style={{
+                                        padding: '0.4rem 0.8rem',
+                                        fontSize: '0.75rem',
+                                        background: order.status_name === status ? 'var(--accent-primary)' : 'var(--bg-primary)',
+                                        color: order.status_name === status ? 'white' : 'var(--text-primary)',
+                                        border: '1px solid var(--border-light)',
+                                        borderRadius: 'var(--radius-sm)',
+                                        transition: 'all 0.2s',
+                                        opacity: order.status_name === status ? 1 : 0.8
+                                    }}
+                                >
+                                    {status}
+                                </button>
+                            ))}
                         </div>
                     </div>
                 </div>

@@ -24,7 +24,7 @@ const DeliveryPartners = () => {
     const fetchPartners = async (showLoading = true) => {
         if (showLoading) setLoading(true);
         try {
-            const response = await fetch('http://localhost:3000/api/users/delivery-partners');
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/delivery-partners`);
             if (!response.ok) {
                 throw new Error('Failed to fetch delivery partners');
             }
@@ -45,7 +45,7 @@ const DeliveryPartners = () => {
 
     const handleVerify = async (partnerId) => {
         try {
-            const response = await fetch(`http://localhost:3000/api/users/delivery-partners/${partnerId}/verify`, {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/delivery-partners/${partnerId}/verify`, {
                 method: 'POST',
             });
             if (!response.ok) {
