@@ -23,7 +23,10 @@ class _mainPageDPState extends ConsumerState<mainPageDP> {
   void initState() {
     super.initState();
     _pages.addAll([
-      HomePageDP(onHistoryTap: () => setState(() => _currentIndex = 1)),
+      HomePageDP(
+        onHistoryTap: () => setState(() => _currentIndex = 1),
+        onSettingsTap: () => setState(() => _currentIndex = 2),
+      ),
       const OrdersPage(),
       const ProfilePageDP(),
     ]);

@@ -16,10 +16,12 @@ import 'package:newrapidx/api_constants.dart';
 
 import 'order_notification_overlay.dart';
 import 'dp_navigation_page.dart';
+import '../Profile/helpBottomSheetDP.dart';
 
 class HomePageDP extends ConsumerStatefulWidget {
   final VoidCallback? onHistoryTap;
-  const HomePageDP({Key? key, this.onHistoryTap}) : super(key: key);
+  final VoidCallback? onSettingsTap;
+  const HomePageDP({Key? key, this.onHistoryTap, this.onSettingsTap}) : super(key: key);
 
   @override
   ConsumerState<HomePageDP> createState() => _HomePageDPState();
@@ -38,10 +40,56 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
   // ─── Pending notification shown ──────────────────────────────────────
   bool _showingNotification = false;
 
+  // ─── Today Summary Real Time Data ────────────────────────────────────
+  int _totalOrders = 0;
+  double _totalEarnings = 0.0;
+  double _pendingEarnings = 0.0;
+
   @override
   void initState() {
     super.initState();
     _fetchActiveOrder(); // Always load any existing active order on open
+    _fetchTodaySummary(); // Load real time data
+  }
+
+  Future<void> _fetchTodaySummary() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+      
+      final res = await http.get(
+        Uri.parse('${ApiConstants.baseUrl}/users/delivery-partner-orders'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      
+      if (!mounted) return;
+      if (res.statusCode == 200) {
+        final List<dynamic> orders = json.decode(res.body);
+        int total = 0;
+        double earnings = 0;
+        double pending = 0;
+        
+        for (var order in orders) {
+          final statusId = order['delivery_status_id'] as int? ?? 0;
+          final amount = (order['order_amount'] as num?)?.toDouble() ?? 0.0;
+          
+          if (statusId == 37) { // Delivered
+            total++;
+            earnings += amount;
+          } else if (statusId >= 33 && statusId < 37) { // Active/Pending
+            pending += amount;
+          }
+        }
+        
+        setState(() {
+          _totalOrders = total;
+          _totalEarnings = earnings;
+          _pendingEarnings = pending;
+        });
+      }
+    } catch (e) {
+      debugPrint('Fetch summary error: $e');
+    }
   }
 
   @override
@@ -487,11 +535,11 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
   Widget _buildTodaySummary() {
     return Row(
       children: [
-        Expanded(child: _summaryCard('Earnings', '₹ 0', Icons.account_balance_wallet_outlined, DPColors.deepBlue)),
+        Expanded(child: _summaryCard('Earnings', '₹ ${_totalEarnings.toStringAsFixed(0)}', Icons.account_balance_wallet_outlined, DPColors.deepBlue)),
         SizedBox(width: 16.w),
-        Expanded(child: _summaryCard('Orders', '0', Icons.check_circle_outline, DPColors.teal)),
+        Expanded(child: _summaryCard('Orders', '$_totalOrders', Icons.check_circle_outline, DPColors.teal)),
         SizedBox(width: 16.w),
-        Expanded(child: _summaryCard('Pending', '₹ 0', Icons.pending_outlined, DPColors.warningOrange)),
+        Expanded(child: _summaryCard('Pending', '₹ ${_pendingEarnings.toStringAsFixed(0)}', Icons.pending_outlined, DPColors.warningOrange)),
       ],
     );
   }
@@ -919,10 +967,17 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
     final items = [
       (_quickActionItem(
           Icons.history_rounded, 'History', widget.onHistoryTap ?? () {})),
-      (_quickActionItem(Icons.headset_mic_outlined, 'Support', () {})),
+      (_quickActionItem(Icons.headset_mic_outlined, 'Support', () {
+         showHelpSupportBottomSheetDP(context);
+      })),
       (_quickActionItem(
-          Icons.account_balance_wallet_outlined, 'Wallet', () {})),
-      (_quickActionItem(Icons.settings_outlined, 'Settings', () {})),
+          Icons.account_balance_wallet_outlined, 'Wallet', () {
+             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                 content: Text("Wallet coming soon!", style: GoogleFonts.baloo2(color: Colors.white)),
+                 backgroundColor: DPColors.deepBlue,
+             ));
+          })),
+      (_quickActionItem(Icons.settings_outlined, 'Settings', widget.onSettingsTap ?? () {})),
     ];
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
