@@ -22,13 +22,11 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="users" element={<Users />} />
-          <Route path="businesses" element={<Businesses />} />
           <Route path="partners" element={<DeliveryPartners />} />
           <Route path="orders" element={<Orders />} />
           <Route path="parcels" element={<Parcels />} />
           <Route path="payments" element={<Payments />} />
           <Route path="payouts" element={<Payouts />} />
-          <Route path="billing" element={<Billing />} />
           <Route path="complaints" element={<Complaints />} />
           <Route path="master-data" element={<MasterData />} />
           <Route path="roles" element={<Roles />} />

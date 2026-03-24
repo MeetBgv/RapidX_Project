@@ -10,13 +10,11 @@ const Sidebar = ({ isOpen }) => {
     const menuItems = [
         { name: 'Dashboard', icon: <LayoutDashboard />, path: '/' },
         { name: 'Users', icon: <Users />, path: '/users' },
-        { name: 'Business Clients', icon: <Briefcase />, path: '/businesses' },
         { name: 'Delivery Partners', icon: <Truck />, path: '/partners' },
         { name: 'Orders', icon: <PackageCheck />, path: '/orders' },
         { name: 'Parcels', icon: <Box />, path: '/parcels' },
         { name: 'Payments', icon: <CreditCard />, path: '/payments' },
         { name: 'Partner Payouts', icon: <Banknote />, path: '/payouts' },
-        { name: 'Business Billing', icon: <FileText />, path: '/billing' },
         { name: 'Complaints', icon: <AlertCircle />, path: '/complaints' },
         { name: 'Master Data', icon: <Database />, path: '/master-data' },
         { name: 'Roles Management', icon: <Shield />, path: '/roles' },

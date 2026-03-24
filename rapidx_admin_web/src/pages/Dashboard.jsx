@@ -58,7 +58,6 @@ const Dashboard = () => {
 
     const userDistribution = [
         { name: 'Customers', value: parseInt(stats.total_customers) || 0 },
-        { name: 'Businesses', value: parseInt(stats.total_businesses) || 0 },
         { name: 'Delivery Partners', value: parseInt(stats.total_delivery_partners) || 0 },
     ];
 
@@ -78,7 +77,6 @@ const Dashboard = () => {
             <div className="grid-cards">
                 <StatCard title="Total Users" value={stats.total_users} icon={<Users />} color="blue" />
                 <StatCard title="Total Customers" value={stats.total_customers} icon={<Users />} color="blue" />
-                <StatCard title="Total Businesses" value={stats.total_businesses} icon={<Briefcase />} color="purple" />
                 <StatCard title="Total Delivery Partners" value={stats.total_delivery_partners} icon={<Truck />} color="green" />
                 <StatCard title="Active Delivery Partners" value={stats.active_delivery_partners} icon={<Truck />} color="green" />
                 <StatCard title="Pending Partner Verifications" value={stats.pending_verifications} icon={<AlertTriangle />} color="warning" />
