@@ -7,6 +7,8 @@ import 'package:provider/provider.dart';
 import 'package:newrapidx/Common/CommonLogin.dart';
 import '../../../Common/savedAddressesPage.dart';
 import 'package:newrapidx/providers/userDataProvider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:newrapidx/Common/updateChecker.dart';
 
 import 'accountSettingsPage.dart';
 import 'helpBottomSheet.dart';
@@ -124,6 +126,14 @@ class _profileAppState extends State<profileApp> {
                   ),
 
                   buildButton(
+                    icon: Icons.system_update,
+                    title: "Check for Updates",
+                    onTap: () {
+                      UpdateChecker.checkForUpdates(context);
+                    },
+                  ),
+
+                  buildButton(
                     icon: Icons.settings_outlined,
                     title: "Account Settings",
                     onTap: () {
@@ -225,10 +235,15 @@ class _profileAppState extends State<profileApp> {
             ),
 
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
 
                 print("User Logged Out");
+                
+                // Clear persistent storage
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.clear();
+
                 // Add logout logic here
                 Navigator.pushAndRemoveUntil(
                   context,

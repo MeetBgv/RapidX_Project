@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:newrapidx/providers/delivery_partner_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:newrapidx/Common/CommonLogin.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:newrapidx/Common/updateChecker.dart';
 
 import '../../theme/dp_theme.dart';
 import 'helpBottomSheetDP.dart';
@@ -91,6 +93,12 @@ class ProfilePageDP extends ConsumerWidget {
                   icon: Icons.privacy_tip_outlined,
                   title: "Privacy Policy",
                   onTap: () => showPrivacyPolicyBottomSheetDP(context),
+                  showDivider: true,
+                ),
+                _buildMenuItem(
+                  icon: Icons.system_update_outlined,
+                  title: "Check for Updates",
+                  onTap: () => UpdateChecker.checkForUpdates(context),
                   showDivider: false,
                 ),
               ]),
@@ -460,8 +468,13 @@ class ProfilePageDP extends ConsumerWidget {
               ),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
+                
+                // Clear persistent storage
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.clear();
+
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(

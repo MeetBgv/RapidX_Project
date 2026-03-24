@@ -1,44 +1,67 @@
-import React, { useState } from 'react';
-import { MoreHorizontal, Edit2, Trash2, Shield } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { MoreHorizontal, Edit2, Trash2, Shield, RefreshCw } from 'lucide-react';
 
 const Businesses = () => {
-    const [viewDetails, setViewDetails] = useState(false);
+    const [selectedBusiness, setSelectedBusiness] = useState(null);
+    const [businesses, setBusinesses] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    if (viewDetails) {
+    const fetchBusinesses = async (showLoading = true) => {
+        if (showLoading) setLoading(true);
+        try {
+            const response = await fetch('http://localhost:3000/api/users/businesses');
+            if (!response.ok) {
+                throw new Error('Failed to fetch businesses');
+            }
+            const data = await response.json();
+            setBusinesses(data);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            if (showLoading) setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchBusinesses(true);
+        const interval = setInterval(() => fetchBusinesses(false), 10000);
+        return () => clearInterval(interval);
+    }, []);
+
+    if (selectedBusiness) {
+        const business = selectedBusiness;
         return (
             <div className="fade-in">
                 <div className="details-header">
-                    <button className="back-btn" onClick={() => setViewDetails(false)}>←</button>
-                    <h1 className="page-title">Business Details: BIZ-0023</h1>
+                    <button className="back-btn" onClick={() => setSelectedBusiness(null)}>←</button>
+                    <h1 className="page-title">Business Details: #{business.business_id}</h1>
                 </div>
 
                 <div className="grid-2-cols">
                     <div className="panel">
                         <h3 className="panel-title">Business Information</h3>
-                        <div className="info-row"><span className="info-label">Company Name</span><span className="info-value">Tech Retailers Pvt Ltd</span></div>
-                        <div className="info-row"><span className="info-label">Business Type</span><span className="info-value">Retail</span></div>
-                        <div className="info-row"><span className="info-label">Registration Number</span><span className="info-value">GSTIN29AABCT1234F1Z5</span></div>
-                        <div className="info-row"><span className="info-label">Contact Phone</span><span className="info-value">+91 8888877777</span></div>
+                        <div className="info-row"><span className="info-label">Company Name</span><span className="info-value">{business.company_name}</span></div>
+                        <div className="info-row"><span className="info-label">Business Type</span><span className="info-value">{business.business_type || 'N/A'}</span></div>
+                        <div className="info-row"><span className="info-label">Registration Number</span><span className="info-value">{business.reg_no || 'N/A'}</span></div>
+                        <div className="info-row"><span className="info-label">Contact Phone</span><span className="info-value">{business.business_phone || 'N/A'}</span></div>
                     </div>
 
                     <div className="panel">
                         <h3 className="panel-title">Billing Information</h3>
-                        <div className="info-row"><span className="info-label">Billing Cycle</span><span className="info-value"><span className="status-badge status-info">Monthly</span></span></div>
-                        <div className="info-row"><span className="info-label">Payment Method</span><span className="info-value">Bank Transfer</span></div>
-                        <div className="info-row"><span className="info-label">Pending Payments</span><span className="info-value" style={{ color: 'var(--accent-warning)', fontWeight: 'bold' }}>₹15,400.00</span></div>
+                        <div className="info-row"><span className="info-label">Billing Cycle</span><span className="info-value"><span className="status-badge status-info">{business.billing_cycle || 'N/A'}</span></span></div>
+                        <div className="info-row"><span className="info-label">Payment Method</span><span className="info-value">{business.payment_method || 'N/A'}</span></div>
+                        <div className="info-row"><span className="info-label">Account Status</span><span className="info-value"><span className={`status-badge ${business.account_status === 'Active' ? 'status-success' : 'status-warning'}`}>{business.account_status || 'Pending'}</span></span></div>
                     </div>
 
                     <div className="panel">
-                        <h3 className="panel-title">Business Admin & Addresses</h3>
-                        <div className="info-row"><span className="info-label">Account Admin User</span><span className="info-value" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Shield size={14} /> admin@techretail.com</span></div>
-                        <div className="info-row"><span className="info-label">Registered Address</span><span className="info-value">45, Indiranagar, Bangalore, Karnataka, 560038</span></div>
+                        <h3 className="panel-title">Business Admin</h3>
+                        <div className="info-row"><span className="info-label">Admin Name</span><span className="info-value">{business.admin_first_name} {business.admin_last_name}</span></div>
+                        <div className="info-row"><span className="info-label">Admin Email</span><span className="info-value" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Shield size={14} /> {business.admin_email}</span></div>
                     </div>
 
                     <div className="panel">
-                        <h3 className="panel-title">Business Orders & Billing</h3>
-                        <div className="info-row"><span className="info-label">Total Orders</span><span className="info-value">1,452</span></div>
-                        <div className="info-row"><span className="info-label">Generated Bills</span><span className="info-value">14</span></div>
-                        <div className="info-row"><span className="info-label">Payment Status</span><span className="info-value"><span className="status-badge status-warning">Overdue</span></span></div>
+                        <h3 className="panel-title">Operations</h3>
                         <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
                             <button className="primary-btn" style={{ flex: 1, padding: '0.4rem', justifyContent: 'center' }}>View Order History</button>
                             <button className="primary-btn" style={{ flex: 1, padding: '0.4rem', justifyContent: 'center' }}>View Billing History</button>
@@ -56,7 +79,9 @@ const Businesses = () => {
                     <h1 className="page-title">Business Clients</h1>
                     <p className="page-subtitle">B2B client accounts, tracking and billing.</p>
                 </div>
-                <button className="primary-btn">+ Register Business</button>
+                <button className="primary-btn" onClick={() => fetchBusinesses(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <RefreshCw size={16} /> Refresh
+                </button>
             </div>
 
             <div className="table-container">
@@ -74,32 +99,48 @@ const Businesses = () => {
                             <th>Account Status</th>
                             <th>Billing Cycle</th>
                             <th>Payment Method</th>
-                            <th>Pending Payments</th>
                             <th>Created Date</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {[1, 2, 3].map((item) => (
-                            <tr key={item}>
-                                <td>#BIZ-00{20 + item}</td>
-                                <td>Company {item} Ltd</td>
-                                <td>E-Commerce</td>
-                                <td>REG-00{item}XAY</td>
-                                <td>+91 99000111{item}</td>
-                                <td><span className="status-badge status-success">Active</span></td>
-                                <td>Monthly</td>
-                                <td>Net Banking</td>
-                                <td>₹{item * 4000}</td>
-                                <td>Aug 10, 2026</td>
-                                <td>
-                                    <div className="td-actions">
-                                        <button className="btn-icon" onClick={() => setViewDetails(true)}><MoreHorizontal size={16} /></button>
-                                        <button className="btn-icon"><Edit2 size={16} /></button>
-                                    </div>
-                                </td>
+                        {loading ? (
+                            <tr>
+                                <td colSpan="10" style={{ textAlign: 'center', padding: '2rem' }}>Loading businesses...</td>
                             </tr>
-                        ))}
+                        ) : error ? (
+                            <tr>
+                                <td colSpan="10" style={{ textAlign: 'center', padding: '2rem', color: 'var(--accent-danger)' }}>{error}</td>
+                            </tr>
+                        ) : businesses.length === 0 ? (
+                            <tr>
+                                <td colSpan="10" style={{ textAlign: 'center', padding: '2rem' }}>No businesses found</td>
+                            </tr>
+                        ) : (
+                            businesses.map((business) => (
+                                <tr key={business.business_id}>
+                                    <td>#{business.business_id}</td>
+                                    <td>{business.company_name}</td>
+                                    <td>{business.business_type || 'N/A'}</td>
+                                    <td>{business.reg_no || 'N/A'}</td>
+                                    <td>{business.business_phone || 'N/A'}</td>
+                                    <td>
+                                        <span className={`status-badge ${business.account_status === 'Active' ? 'status-success' : 'status-warning'}`}>
+                                            {business.account_status || 'Pending'}
+                                        </span>
+                                    </td>
+                                    <td>{business.billing_cycle || 'N/A'}</td>
+                                    <td>{business.payment_method || 'N/A'}</td>
+                                    <td>{business.created_at ? new Date(business.created_at).toLocaleDateString() : 'N/A'}</td>
+                                    <td>
+                                        <div className="td-actions">
+                                            <button className="btn-icon" onClick={() => setSelectedBusiness(business)}><MoreHorizontal size={16} /></button>
+                                            <button className="btn-icon"><Edit2 size={16} /></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>

@@ -224,16 +224,14 @@ class _customerLoginState extends ConsumerState<customerLogin> {
                       final role = data['role'];
                       final token = data['token'];
 
-                      // Save auth token to SharedPreferences
                       final prefs = await SharedPreferences.getInstance();
                       if (token != null) {
                         await prefs.setString('auth_token', token);
+                        await prefs.setString('role', role.toString());
                       }
 
                       debugPrint('Login Response - Role: $role');
-                      print(
-                        'Login Response - Role: $role',
-                      ); // Fallback regular print
+                      print('Login Response - Role: $role'); 
                       debugPrint('Login Response - Data: $data');
 
                       if (role == 'Admin') {
@@ -248,6 +246,11 @@ class _customerLoginState extends ConsumerState<customerLogin> {
                         final String firstName = userData['first_name'] ?? '';
                         final String lastName = userData['last_name'] ?? '';
                         final String phone = userData['phone'] ?? '';
+                        
+                        // Save to persistent storage
+                        await prefs.setString('first_name', firstName);
+                        await prefs.setString('last_name', lastName);
+                        await prefs.setString('phone', phone);
 
                         // Save to Riverpod DeliveryPartnerNotifier
                         final dpNotifier = ref.read(
@@ -269,6 +272,12 @@ class _customerLoginState extends ConsumerState<customerLogin> {
                         final String lastName = userData['last_name'] ?? '';
                         final String phone = userData['phone'] ?? '';
                         final String email = userData['email'] ?? '';
+
+                        // Save to persistent storage
+                        await prefs.setString('first_name', firstName);
+                        await prefs.setString('last_name', lastName);
+                        await prefs.setString('phone', phone);
+                        await prefs.setString('email', email);
 
                         // Save to UserDataProvider (still using Provider)
                         final userProvider = Provider.of<UserDataProvider>(

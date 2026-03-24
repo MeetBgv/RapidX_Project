@@ -1116,4 +1116,120 @@ const getDeliveryPartnerOrders = async (dpId) => {
     }
 };
 
-module.exports = { registerCustomer, registerBusiness, registerBusinessMasterValues, registerEmployee, registerDeliveryPartner, login, createOrder, updateUserRole, updateUserLocation, getAllUsers, getAllDeliveryPartners, verifyDeliveryPartner, createDeliveryPartnerProfile, getDeliveryPartnerProfile, getPendingOrders, acceptOrder, getDPActiveOrder, updateOrderStatus, getAllOrders, getCustomerOrders, getDeliveryPartnerOrders };
+const getAllBusinesses = async () => {
+    try {
+        const query = `
+            SELECT 
+                bc.business_id, bc.company_name, bc.reg_no, bc.business_phone, bc.created_at, 
+                u.email as admin_email, u.first_name as admin_first_name, u.last_name as admin_last_name,
+                vt.value_name as business_type,
+                vb.value_name as billing_cycle,
+                vp.value_name as payment_method,
+                va.value_name as account_status
+            FROM business_clients bc
+            LEFT JOIN users u ON bc.account_admin_id = u.user_id
+            LEFT JOIN value_master vt ON bc.business_type_id = vt.value_id
+            LEFT JOIN value_master vb ON bc.billing_cycle_id = vb.value_id
+            LEFT JOIN value_master vp ON bc.payment_method_id = vp.value_id
+            LEFT JOIN value_master va ON bc.account_status_id = va.value_id
+            ORDER BY bc.created_at DESC
+        `;
+        const result = await pool.query(query);
+        return result.rows;
+    } catch (error) {
+        console.log("Error getting all businesses:", error);
+        return false;
+    }
+};
+
+const getDashboardStats = async () => {
+    try {
+        const statsQuery = `
+            SELECT 
+                (SELECT COUNT(*) FROM users) as total_users,
+                (SELECT COUNT(*) FROM users u JOIN roles_master r ON u.role_id = r.role_id WHERE r.role_name = 'Customer') as total_customers,
+                (SELECT COUNT(*) FROM users u JOIN roles_master r ON u.role_id = r.role_id WHERE r.role_name = 'Business') as total_businesses,
+                (SELECT COUNT(*) FROM users u JOIN roles_master r ON u.role_id = r.role_id WHERE r.role_name IN ('Delivery Partner', 'Rider') OR u.role_id = 9) as total_delivery_partners,
+                (SELECT COUNT(*) FROM delivery_partner WHERE is_verified = true) as active_delivery_partners,
+                (SELECT COUNT(*) FROM delivery_partner WHERE is_verified = false) as pending_verifications,
+                (SELECT COUNT(*) FROM users WHERE is_banned = true) as blocked_accounts,
+                (SELECT COUNT(*) FROM orders) as total_orders,
+                (SELECT COUNT(*) FROM orders WHERE created_at >= CURRENT_DATE) as orders_today,
+                (SELECT COUNT(*) FROM orders o JOIN value_master v ON o.delivery_status_id = v.value_id WHERE v.value_name IN ('Picked Up', 'In Transit', 'Assigned')) as orders_in_transit,
+                (SELECT COUNT(*) FROM orders o JOIN value_master v ON o.delivery_status_id = v.value_id WHERE v.value_name = 'Delivered') as delivered_orders,
+                (SELECT SUM(order_amount) FROM orders) as total_revenue
+        `;
+        const statsResult = await pool.query(statsQuery);
+        
+        // Fetch revenue trend for last 7 days
+        const revenueTrendQuery = `
+            SELECT 
+                TO_CHAR(date_series, 'Dy') as name,
+                COALESCE(SUM(o.order_amount), 0) as revenue
+            FROM 
+                generate_series(CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, '1 day') AS date_series
+            LEFT JOIN 
+                orders o ON DATE(o.created_at) = DATE(date_series)
+            GROUP BY 
+                date_series
+            ORDER BY 
+                date_series
+        `;
+        const revenueTrendResult = await pool.query(revenueTrendQuery);
+
+        // Fetch order trend for last 7 days
+        const orderTrendQuery = `
+            SELECT 
+                TO_CHAR(date_series, 'Dy') as name,
+                COUNT(o.order_id) as total,
+                COUNT(CASE WHEN vs.value_name = 'Delivered' THEN 1 END) as delivered
+            FROM 
+                generate_series(CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, '1 day') AS date_series
+            LEFT JOIN 
+                orders o ON DATE(o.created_at) = DATE(date_series)
+            LEFT JOIN 
+                value_master vs ON o.delivery_status_id = vs.value_id
+            GROUP BY 
+                date_series
+            ORDER BY 
+                date_series
+        `;
+        const orderTrendResult = await pool.query(orderTrendQuery);
+
+        return {
+            ...statsResult.rows[0],
+            revenueTrend: revenueTrendResult.rows,
+            orderTrend: orderTrendResult.rows
+        };
+    } catch (err) {
+        console.error("Error fetching dashboard stats:", err);
+        throw err;
+    }
+};
+
+module.exports = { 
+    registerCustomer, 
+    registerBusiness, 
+    registerBusinessMasterValues, 
+    registerEmployee, 
+    registerDeliveryPartner, 
+    login, 
+    createOrder, 
+    updateUserRole, 
+    updateUserLocation, 
+    getAllUsers, 
+    getAllDeliveryPartners, 
+    verifyDeliveryPartner, 
+    createDeliveryPartnerProfile, 
+    getDeliveryPartnerProfile, 
+    getPendingOrders, 
+    acceptOrder, 
+    getDPActiveOrder, 
+    updateOrderStatus, 
+    getAllOrders, 
+    getCustomerOrders, 
+    getDeliveryPartnerOrders,
+    getDashboardStats,
+    getAllBusinesses
+};
+

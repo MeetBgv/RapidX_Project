@@ -40,5 +40,7 @@ router.get("/orders/active", userController.getDPActiveOrderHandler);
 router.post("/orders/:id/status", userController.updateOrderStatusHandler);
 
 router.get("/delivery-partner-orders", userController.getDeliveryPartnerOrdersHandler);
+router.get("/dashboard-stats", userController.getDashboardStatsHandler);
+router.get("/businesses", userController.getAllBusinessesHandler);
 
 module.exports = router;

@@ -374,6 +374,26 @@ const getDeliveryPartnerOrdersHandler = async (req, res) => {
     }
 };
 
+const getDashboardStatsHandler = async (req, res) => {
+    try {
+        const stats = await userService.getDashboardStats();
+        res.status(200).json(stats);
+    } catch (error) {
+        console.error('Error in getDashboardStatsHandler:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+const getAllBusinessesHandler = async (req, res) => {
+    try {
+        const businesses = await userService.getAllBusinesses();
+        res.status(200).json(businesses);
+    } catch (error) {
+        console.error('Error in getAllBusinessesHandler:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
 module.exports = {
     registerCustomer,
     registerBusiness,
@@ -396,5 +416,9 @@ module.exports = {
     updateOrderStatusHandler,
     getAllOrdersHandler,
     getCustomerOrdersHandler,
-    getDeliveryPartnerOrdersHandler
-};
+    getDeliveryPartnerOrdersHandler,
+    getDashboardStatsHandler,
+    getAllBusinessesHandler
+};
+
+
