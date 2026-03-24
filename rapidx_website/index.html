@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RapidX | Download App & Updates</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container nav-content">
+            <div class="logo">
+                <!-- Using a generic text logo, can replace with rapidXlogo.png later -->
+                <h2>Rapid<span class="accent">X</span></h2>
+            </div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#updates">Update Log</a>
+                <a href="#download" class="btn btn-outline">Download App</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="glow-orb orb-1"></div>
+        <div class="glow-orb orb-2"></div>
+        
+        <div class="container hero-content">
+            <div class="hero-text fade-in">
+                <div class="badge">
+                    <span class="pulse-dot"></span>
+                    Latest Version: v1.0.0
+                </div>
+                <h1>Move Anything,<br> <span class="accent-gradient">Anywhere.</span></h1>
+                <p class="subtitle">Experience fast, reliable, and on-demand logistics directly from your phone. Send parcels locally or register as a delivery partner today.</p>
+                
+                <div class="cta-group">
+                    <a href="#download" class="btn btn-primary btn-large">
+                        <i data-lucide="download"></i> Download APK
+                    </a>
+                    <a href="#updates" class="btn btn-secondary btn-large">
+                        <i data-lucide="refresh-cw"></i> View Updates
+                    </a>
+                </div>
+                
+                <p class="version-info">Supported on Android 8.0+ | File size: ~45 MB</p>
+            </div>
+            
+            <div class="hero-image float-animation">
+                <!-- Placeholder for App Mockup -->
+                <div class="app-mockup">
+                    <div class="mockup-header">
+                        <div class="camera-notch"></div>
+                    </div>
+                    <div class="mockup-body">
+                        <div class="mockup-logo">
+                            <h2>Rapid<span class="accent">X</span></h2>
+                        </div>
+                        <div class="mockup-card"></div>
+                        <div class="mockup-card small"></div>
+                        <div class="mockup-btn"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Live Stats Section -->
+    <section id="live-stats" class="stats-section">
+        <div class="container stats-grid">
+            <div class="stat-box glass-panel reveal">
+                <div class="stat-icon-wrapper"><i data-lucide="users"></i></div>
+                <h3 id="stat-users">--</h3>
+                <p>Happy Customers</p>
+            </div>
+            <div class="stat-box glass-panel reveal" style="transition-delay: 100ms;">
+                <div class="stat-icon-wrapper"><i data-lucide="package-check"></i></div>
+                <h3 id="stat-orders">--</h3>
+                <p>Delivered Parcels</p>
+            </div>
+            <div class="stat-box glass-panel reveal" style="transition-delay: 200ms;">
+                <div class="stat-icon-wrapper"><i data-lucide="bike"></i></div>
+                <h3 id="stat-partners">--</h3>
+                <p>Active Agents</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container section-header">
+            <h2>Why Choose <span class="accent">RapidX?</span></h2>
+            <p>Built for speed and ultimate transparency.</p>
+        </div>
+        
+        <div class="container features-grid">
+            <div class="feature-card reveal">
+                <div class="icon-wrapper">
+                    <i data-lucide="zap"></i>
+                </div>
+                <h3>Lightning Fast</h3>
+                <p>Advanced routing algorithms connect your parcel with the closest available delivery agent instantly.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="icon-wrapper">
+                    <i data-lucide="map-pin"></i>
+                </div>
+                <h3>Live Tracking</h3>
+                <p>Track your parcels in real-time with accurate GPS monitoring directly on the map.</p>
+            </div>
+            <div class="feature-card reveal">
+                <div class="icon-wrapper">
+                    <i data-lucide="shield-check"></i>
+                </div>
+                <h3>Secure & Reliable</h3>
+                <p>All delivery partners are verified. Integrated OTP validations ensure safe handoffs.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Updates & Changelog -->
+    <section id="updates" class="updates">
+        <div class="container section-header">
+            <h2>Release <span class="accent">History</span></h2>
+            <p>Check out the latest features and bug fixes pushed to RapidX.</p>
+        </div>
+        
+        <div class="container timeline">
+            <!-- Version 1.0.0 -->
+            <div class="timeline-item reveal">
+                <div class="timeline-marker">
+                    <div class="marker-dot"></div>
+                    <div class="marker-line"></div>
+                </div>
+                <div class="timeline-content glass-panel active-version">
+                    <div class="version-header">
+                        <h3>Version 1.0.0 <span class="status-badge new">LATEST</span></h3>
+                        <span class="date">May 10, 2026</span>
+                    </div>
+                    <ul class="changelog">
+                        <li><span class="tag feature">Feature</span> Added Full Persistent Login Support for all users</li>
+                        <li><span class="tag feature">Feature</span> Implemented In-App Update Checker</li>
+                        <li><span class="tag enhance">Enhancement</span> Rebuilt Delivery Partner Profile UI</li>
+                        <li><span class="tag bug">Fix</span> Resolved Maps Navigation NaN/Infinity crashes</li>
+                    </ul>
+                    <a href="#" class="btn btn-primary btn-small download-trigger">
+                        <i data-lucide="download"></i> Download v1.0.0 APK
+                    </a>
+                </div>
+            </div>
+
+            <!-- Version 0.9.5 -->
+            <div class="timeline-item reveal">
+                <div class="timeline-marker">
+                    <div class="marker-dot"></div>
+                    <div class="marker-line"></div>
+                </div>
+                <div class="timeline-content glass-panel">
+                    <div class="version-header">
+                        <h3>Version 0.9.5</h3>
+                        <span class="date">April 28, 2026</span>
+                    </div>
+                    <ul class="changelog">
+                        <li><span class="tag feature">Feature</span> Connected app securely to Supabase Backend</li>
+                        <li><span class="tag feature">Feature</span> Added Delivery Partner Order History</li>
+                        <li><span class="tag enhance">Enhancement</span> Limited phone number inputs to 10 digits</li>
+                    </ul>
+                    <a href="#" class="btn btn-secondary btn-small">
+                        <i data-lucide="download"></i> Download v0.9.5 APK
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA / Download Section -->
+    <section id="download" class="cta-section">
+        <div class="container">
+            <div class="cta-box glass-panel reveal">
+                <h2>Ready to get started?</h2>
+                <p>Download the official APK file directly from our secure servers. Your phone might prompt you to "Install from Unknown Sources" — this is normal during beta testing!</p>
+                <button class="btn btn-primary btn-large download-trigger pulse-animation">
+                    <i data-lucide="download-cloud"></i> Download Android APK
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-content">
+            <div class="logo">
+                <h2>Rapid<span class="accent">X</span></h2>
+                <p>© 2026 RapidX Logistics. All rights reserved.</p>
+            </div>
+            <div class="socials">
+                <a href="#"><i data-lucide="twitter"></i></a>
+                <a href="#"><i data-lucide="github"></i></a>
+                <a href="#"><i data-lucide="linkedin"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>
