@@ -54,21 +54,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Real-Time Stats Fetching
+    // Real-Time Stats Fetching (directly from Supabase — works on any host)
+    const SUPABASE_URL = 'https://vhvyypwbobeutfhyadot.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZodnl5cHdib2JldXRmaHlhZG90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwNzY1NDUsImV4cCI6MjA4OTY1MjU0NX0.z_PnBLCwqcf_AMAme35f5gGApcTc_bS9rNXgxSYHYxA';
+
     const fetchLiveStats = async () => {
         try {
-            const response = await fetch('http://localhost:3000/api/users/dashboard-stats');
-            if (response.ok) {
-                const data = await response.json();
-                
-                // Animate Numbers
-                animateValue("stat-users", 0, data.total_customers || 8, 1500);
-                animateValue("stat-orders", 0, data.delivered_orders || 14, 1500);
-                animateValue("stat-partners", 0, data.active_delivery_partners || 1, 1500);
-            }
+            const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
+
+            const [usersRes, ordersRes, partnersRes] = await Promise.all([
+                fetch(`${SUPABASE_URL}/rest/v1/users?role_id=eq.5&select=user_id`, { headers }),
+                fetch(`${SUPABASE_URL}/rest/v1/orders?status=eq.delivered&select=order_id`, { headers }),
+                fetch(`${SUPABASE_URL}/rest/v1/delivery_partner_profiles?is_verified=eq.true&select=user_id`, { headers }),
+            ]);
+
+            const customers = usersRes.ok ? (await usersRes.json()).length : 0;
+            const delivered = ordersRes.ok ? (await ordersRes.json()).length : 0;
+            const activePartners = partnersRes.ok ? (await partnersRes.json()).length : 0;
+
+            animateValue("stat-users", 0, customers || 8, 1500);
+            animateValue("stat-orders", 0, delivered || 14, 1500);
+            animateValue("stat-partners", 0, activePartners || 1, 1500);
         } catch (error) {
             console.error("Could not fetch live stats:", error);
-            // Fallbacks in case backend is offline
             document.getElementById('stat-users').innerText = '100+';
             document.getElementById('stat-orders').innerText = '1K+';
             document.getElementById('stat-partners').innerText = '50+';

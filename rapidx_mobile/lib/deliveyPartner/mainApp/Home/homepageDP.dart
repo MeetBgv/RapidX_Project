@@ -114,7 +114,7 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
   // ─── Poll for pending orders ─────────────────────────────────────────
   void _startPolling() {
     _pollingTimer?.cancel();
-    _pollingTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+    _pollingTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (!mounted) return;
       _checkForNewOrder();
     });
@@ -158,8 +158,10 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
     }
   }
 
+  String? _notifiedOrderId;
+
   Future<void> _checkForNewOrder() async {
-    if (_showingNotification || _activeOrder != null) return;
+    if (_activeOrder != null) return;
     try {
       final res = await http.get(
         Uri.parse('${ApiConstants.baseUrl}/users/orders/pending'),
@@ -167,7 +169,23 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
       if (!mounted) return;
       if (res.statusCode == 200) {
         final List<dynamic> orders = json.decode(res.body);
-        if (orders.isNotEmpty) {
+        
+        // If we are showing a notification, check if that order is still available
+        if (_showingNotification && _notifiedOrderId != null) {
+          final isStillPending = orders.any((o) => o['order_id'].toString() == _notifiedOrderId);
+          if (!isStillPending) {
+            debugPrint('Order $_notifiedOrderId taken by someone else! Popping out notification.');
+            Navigator.of(context, rootNavigator: true).pop();
+            setState(() {
+              _showingNotification = false;
+              _notifiedOrderId = null;
+            });
+          }
+          return;
+        }
+
+        // Only show new notification if not already showing one
+        if (!_showingNotification && orders.isNotEmpty) {
           _showOrderNotification(orders.first as Map<String, dynamic>);
         }
       }
@@ -179,7 +197,12 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
   // ─── Show notification overlay ────────────────────────────────────────
   void _showOrderNotification(Map<String, dynamic> order) {
     if (_showingNotification || !mounted) return;
-    setState(() => _showingNotification = true);
+    
+    final orderIdStr = order['order_id'].toString();
+    setState(() {
+      _showingNotification = true;
+      _notifiedOrderId = orderIdStr;
+    });
 
     showDialog(
       context: context,
@@ -189,13 +212,19 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
         order: order,
         timeoutSeconds: 30,
         onAccept: () {
-          Navigator.pop(context);
-          setState(() => _showingNotification = false);
-          _acceptOrder(order['order_id'].toString());
+          Navigator.of(context, rootNavigator: true).pop(); // Correct pop
+          setState(() {
+            _showingNotification = false;
+            _notifiedOrderId = null;
+          });
+          _acceptOrder(orderIdStr);
         },
         onDecline: () {
-          Navigator.pop(context);
-          setState(() => _showingNotification = false);
+          Navigator.of(context, rootNavigator: true).pop(); // Correct pop
+          setState(() {
+            _showingNotification = false;
+            _notifiedOrderId = null;
+          });
         },
       ),
     );
@@ -214,14 +243,26 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
         },
       );
       if (!mounted) return;
+      
       if (res.statusCode == 200) {
         final accepted = json.decode(res.body) as Map<String, dynamic>;
-        setState(() => _activeOrder = accepted);
-      } else {
+        setState(() {
+          _activeOrder = accepted;
+          _isLoadingOrder = false;
+        });
+        // REFRESH SUMMARY: Important to show updated earnings/counts immediately!
+        _fetchTodaySummary(); 
+        _showSnack('Order accepted successfully!');
+      } else if (res.statusCode == 409) {
         _showSnack('Order already taken by another partner.');
+        _fetchActiveOrder(); // Sync state to see if there's any other active order
+      } else {
+        debugPrint('Accept order failed with code ${res.statusCode}: ${res.body}');
+        _showSnack('Failed to accept order. Error: ${res.statusCode}');
       }
     } catch (e) {
       debugPrint('Accept order error: $e');
+      _showSnack('Network error while accepting order.');
     }
   }
 

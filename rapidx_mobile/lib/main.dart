@@ -4,7 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:newrapidx/splashPage.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' hide Provider, ChangeNotifierProvider;
+import 'package:flutter_riverpod/flutter_riverpod.dart'
+    hide Provider, ChangeNotifierProvider;
 import 'package:newrapidx/providers/userDataProvider.dart';
 
 import 'package:newrapidx/deliveyPartner/theme/dp_theme.dart';
@@ -12,19 +13,17 @@ import 'package:newrapidx/deliveyPartner/theme/dp_theme.dart';
 class AppScrollBehavior extends MaterialScrollBehavior {
   @override
   Set<PointerDeviceKind> get dragDevices => {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-        PointerDeviceKind.trackpad,
-        PointerDeviceKind.stylus,
-      };
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+  };
 }
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-    ),
+    const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
   );
   runApp(
     // ProviderScope is required for Riverpod (Delivery Partner)
@@ -39,9 +38,7 @@ class newRapidX extends StatelessWidget {
   Widget build(BuildContext context) {
     // MultiProvider is kept only for Customer-side UserDataProvider
     return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => UserDataProvider()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => UserDataProvider())],
       child: ScreenUtilInit(
         designSize: const Size(360, 690),
         minTextAdapt: true,

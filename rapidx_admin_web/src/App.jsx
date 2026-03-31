@@ -11,6 +11,7 @@ import Payments from './pages/Payments';
 import Payouts from './pages/Payouts';
 import Billing from './pages/Billing';
 import Complaints from './pages/Complaints';
+import Hubs from './pages/Hubs';
 import MasterData from './pages/MasterData';
 import Roles from './pages/Roles';
 import Settings from './pages/Settings';
@@ -28,6 +29,7 @@ function App() {
           <Route path="payments" element={<Payments />} />
           <Route path="payouts" element={<Payouts />} />
           <Route path="complaints" element={<Complaints />} />
+          <Route path="hubs" element={<Hubs />} />
           <Route path="master-data" element={<MasterData />} />
           <Route path="roles" element={<Roles />} />
           <Route path="settings" element={<Settings />} />

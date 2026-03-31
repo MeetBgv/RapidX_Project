@@ -122,7 +122,7 @@ Widget build(BuildContext context) {
 To save the user's input (like when typing in a TextField), we use `context.read` because we just need to execute a function, we don't need to rebuild the widget while typing.
 
 ```dart
-// Inside a TextField's onChanged or a Button's onPressed
+//   Inside a TextField's onChanged or a Button's onPressed
 TextField(
   onChanged: (newValue) {
     // context.read<UserDataProvider>() fetches the class once to call the function.

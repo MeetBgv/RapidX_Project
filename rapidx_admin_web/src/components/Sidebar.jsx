@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import {
     LayoutDashboard, Users, Briefcase, Truck, PackageCheck,
     Box, CreditCard, Banknote, FileText, AlertCircle,
-    Database, Shield, Settings
+    Database, Shield, Settings, MapPin
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen }) => {
@@ -16,6 +16,7 @@ const Sidebar = ({ isOpen }) => {
         { name: 'Payments', icon: <CreditCard />, path: '/payments' },
         { name: 'Partner Payouts', icon: <Banknote />, path: '/payouts' },
         { name: 'Complaints', icon: <AlertCircle />, path: '/complaints' },
+        { name: 'Hub Network', icon: <MapPin />, path: '/hubs' },
         { name: 'Master Data', icon: <Database />, path: '/master-data' },
         { name: 'Roles Management', icon: <Shield />, path: '/roles' },
         { name: 'Settings', icon: <Settings />, path: '/settings' },
