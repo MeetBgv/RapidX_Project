@@ -134,6 +134,49 @@ const Orders = () => {
                         </div>
                     </div>
 
+                    {/* Routing Information Panel */}
+                    <div className="panel" style={{ gridColumn: 'span 2' }}>
+                        <h3 className="panel-title" style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <MapPin size={16} /> Routing & Hub Network
+                        </h3>
+                        {order.route_data ? (
+                            <div style={{ marginTop: '1rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+                                    {order.route_data.hub_names && order.route_data.hub_names.map((hubName, idx) => (
+                                        <React.Fragment key={idx}>
+                                            <div style={{ padding: '0.4rem 0.8rem', background: idx === 0 || idx === order.route_data.hub_names.length - 1 ? 'var(--accent-primary)' : 'var(--bg-primary)', color: idx === 0 || idx === order.route_data.hub_names.length - 1 ? 'white' : 'var(--text-primary)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: '500', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
+                                                {hubName}
+                                            </div>
+                                            {idx < order.route_data.hub_names.length - 1 && (
+                                                <div style={{ color: 'var(--text-secondary)' }}>➔</div>
+                                            )}
+                                        </React.Fragment>
+                                    ))}
+                                </div>
+                                
+                                <div className="grid-3-cols" style={{ marginTop: '1.5rem', marginBottom: 0 }}>
+                                    <div>
+                                        <h4 style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.25rem' }}>Total Distance</h4>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{order.route_data.total_route_km} km</div>
+                                    </div>
+                                    <div>
+                                        <h4 style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.25rem' }}>Network Distance</h4>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{order.route_data.hub_network_km} km</div>
+                                    </div>
+                                    <div>
+                                        <h4 style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.25rem' }}>Mode</h4>
+                                        <div style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--accent-success)' }}>Out-of-city</div>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
+                                <Truck size={32} style={{ opacity: 0.5, margin: '0 auto 1rem' }} />
+                                <p>Standard local delivery. No complex hub routing required.</p>
+                            </div>
+                        )}
+                    </div>
+
                     {/* Admin Status Controls */}
                     <div className="panel" style={{ gridColumn: 'span 2', border: '1px solid var(--border-light)', background: 'rgba(59, 130, 246, 0.05)' }}>
                         <h3 className="panel-title" style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

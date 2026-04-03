@@ -1,5 +1,5 @@
-import React from 'react';
-import { CreditCard, Download, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { CreditCard, Download, ExternalLink, RefreshCw } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
 
 const paymentVolumeData = [
@@ -12,6 +12,28 @@ const paymentVolumeData = [
 ];
 
 const Payments = () => {
+    const [payments, setPayments] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchPayments = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/payments`);
+            if (res.ok) {
+                const data = await res.json();
+                setPayments(data);
+            }
+        } catch (error) {
+            console.error('Error fetching payments:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchPayments();
+    }, []);
+
     return (
         <div className="fade-in">
             <div className="page-header">
@@ -19,9 +41,14 @@ const Payments = () => {
                     <h1 className="page-title">Payments</h1>
                     <p className="page-subtitle">Track incoming payments from customers and business clients.</p>
                 </div>
-                <button className="primary-btn" style={{ background: 'var(--accent-success)' }}>
-                    <Download size={16} /> Export Transactions
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button className="primary-btn" onClick={fetchPayments} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <RefreshCw size={16} /> Refresh
+                    </button>
+                    <button className="primary-btn" style={{ background: 'var(--accent-success)' }}>
+                        <Download size={16} /> Export Transactions
+                    </button>
+                </div>
             </div>
 
             <div className="grid-3-cols">
@@ -78,20 +105,29 @@ const Payments = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {[1, 2, 3, 4, 5, 6].map((item) => (
-                            <tr key={item}>
-                                <td><span style={{ fontWeight: 600 }}>TXN-902{item}</span></td>
-                                <td><span style={{ color: 'var(--accent-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>{item % 2 == 0 ? `#ORD-930${item}` : `#BIZ-002${item}`} <ExternalLink size={10} /></span></td>
-                                <td>{item % 2 == 0 ? 'UPI' : 'Bank Transfer'}</td>
-                                <td><span style={{ fontWeight: 600 }}>₹{item * 1450}</span></td>
-                                <td style={{ color: 'var(--text-muted)' }}>{item % 2 == 0 ? 'pay_Mz93k2...' : 'UTR-992J3K...'}</td>
-                                <td>
-                                    {item === 3 ? <span className="status-badge status-danger">Failed</span> :
-                                        <span className="status-badge status-success">Success</span>}
-                                </td>
-                                <td>Today, 10:{10 + item * 5} AM</td>
-                            </tr>
-                        ))}
+                        {loading ? (
+                            <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>Loading payments...</td></tr>
+                        ) : payments.length === 0 ? (
+                            <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>No recent payments.</td></tr>
+                        ) : (
+                            payments.map((item) => (
+                                <tr key={item.transaction_id}>
+                                    <td><span style={{ fontWeight: 600 }}>TXN-{item.transaction_id}</span></td>
+                                    <td><span style={{ color: 'var(--accent-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        {item.is_business ? `#BIZ-${item.business_id}` : `#ORD-${item.order_id}`} <ExternalLink size={10} />
+                                    </span></td>
+                                    <td>{item.payment_method_name || 'N/A'}</td>
+                                    <td><span style={{ fontWeight: 600 }}>₹{item.amount}</span></td>
+                                    <td style={{ color: 'var(--text-muted)' }}>{item.transaction_reference}</td>
+                                    <td>
+                                        <span className={`status-badge ${item.payment_status_name === 'Failed' ? 'status-danger' : item.payment_status_name === 'Completed' ? 'status-success' : 'status-warning'}`}>
+                                            {item.payment_status_name || 'Pending'}
+                                        </span>
+                                    </td>
+                                    <td>{new Date(item.created_at).toLocaleString()}</td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>

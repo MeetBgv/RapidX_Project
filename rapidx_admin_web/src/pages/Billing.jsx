@@ -1,60 +1,61 @@
-import React, { useState } from 'react';
-import { FileText, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { FileText, Download, ArrowLeft, RefreshCw } from 'lucide-react';
 
 const Billing = () => {
-    const [viewDetails, setViewDetails] = useState(false);
+    const [billingAccounts, setBillingAccounts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedBill, setSelectedBill] = useState(null);
 
-    if (viewDetails) {
+    const fetchBilling = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/billing`);
+            if (res.ok) {
+                const data = await res.json();
+                setBillingAccounts(data);
+            }
+        } catch (error) {
+            console.error('Error fetching billing accounts:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchBilling();
+    }, []);
+
+    if (selectedBill) {
         return (
             <div className="fade-in">
                 <div className="details-header">
-                    <button className="back-btn" onClick={() => setViewDetails(false)}>←</button>
+                    <button className="back-btn" onClick={() => setSelectedBill(null)}><ArrowLeft size={16} /></button>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <h1 className="page-title">Billing Account: #BILL-1002</h1>
-                        <span className="status-badge status-warning">Overdue (Due: Oct 15)</span>
+                        <h1 className="page-title">Billing Account: #BILL-{selectedBill.billing_account_id}</h1>
+                        <span className={`status-badge ${selectedBill.billing_status_name === 'Paid' ? 'status-success' : 'status-warning'}`}>
+                            {selectedBill.billing_status_name || 'Pending'}
+                        </span>
                     </div>
                 </div>
 
                 <div className="grid-2-cols">
                     <div className="panel">
                         <h3 className="panel-title">Billing Details</h3>
-                        <div className="info-row"><span className="info-label">Billing ID</span><span className="info-value">#BILL-1002</span></div>
-                        <div className="info-row"><span className="info-label">Business ID</span><span className="info-value">#BIZ-0021 (Tech Retailers)</span></div>
+                        <div className="info-row"><span className="info-label">Billing ID</span><span className="info-value">#BILL-{selectedBill.billing_account_id}</span></div>
+                        <div className="info-row"><span className="info-label">Business ID</span><span className="info-value">#BIZ-{selectedBill.business_id} ({selectedBill.company_name})</span></div>
                         <div className="info-row"><span className="info-label">Billing Cycle</span><span className="info-value">Monthly</span></div>
-                        <div className="info-row"><span className="info-label">Period Start Date</span><span className="info-value">Sep 01, 2026</span></div>
-                        <div className="info-row"><span className="info-label">Period End Date</span><span className="info-value">Sep 30, 2026</span></div>
-                        <div className="info-row"><span className="info-label" style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>Total Amount</span><span className="info-value" style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>₹14,200.00</span></div>
-                        <div className="info-row"><span className="info-label">Amount Paid</span><span className="info-value">₹4,200.00</span></div>
-                        <div className="info-row"><span className="info-label" style={{ color: 'var(--accent-warning)', fontWeight: 'bold' }}>Amount Due</span><span className="info-value" style={{ color: 'var(--accent-warning)', fontWeight: 'bold' }}>₹10,000.00</span></div>
-                        <div className="info-row"><span className="info-label">Interest Amount</span><span className="info-value">₹0.00</span></div>
-                        <div className="info-row"><span className="info-label">Generated Date</span><span className="info-value">Oct 05, 2026</span></div>
+                        <div className="info-row"><span className="info-label">Period Start Date</span><span className="info-value">{new Date(selectedBill.period_start_date).toLocaleDateString()}</span></div>
+                        <div className="info-row"><span className="info-label">Period End Date</span><span className="info-value">{new Date(selectedBill.period_end_date).toLocaleDateString()}</span></div>
+                        <div className="info-row"><span className="info-label" style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>Total Amount</span><span className="info-value" style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>₹{selectedBill.total_amount_calculated}</span></div>
+                        <div className="info-row"><span className="info-label">Amount Paid</span><span className="info-value">₹{selectedBill.amount_paid}</span></div>
+                        <div className="info-row"><span className="info-label" style={{ color: 'var(--accent-warning)', fontWeight: 'bold' }}>Amount Due</span><span className="info-value" style={{ color: 'var(--accent-warning)', fontWeight: 'bold' }}>₹{selectedBill.amount_due}</span></div>
+                        <div className="info-row"><span className="info-label">Generated Date</span><span className="info-value">{new Date(selectedBill.generated_at).toLocaleString()}</span></div>
                     </div>
 
                     <div className="panel">
-                        <h3 className="panel-title">Billing Orders</h3>
-                        <div className="table-container" style={{ boxShadow: 'none', background: 'transparent', border: '1px solid var(--border-light)' }}>
-                            <table style={{ fontSize: '0.75rem' }}>
-                                <thead>
-                                    <tr>
-                                        <th>Billing Order ID</th>
-                                        <th>Order ID</th>
-                                        <th>Amount</th>
-                                        <th>Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {[1, 2, 3, 4, 5].map(i => (
-                                        <tr key={i}>
-                                            <td><span style={{ color: 'var(--accent-primary)' }}>#BO-{1000 + i}</span></td>
-                                            <td>#ORD-983{i}</td>
-                                            <td>₹{140 + i * 10}</td>
-                                            <td>Sep {10 + i}, 2026</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                            <button className="primary-btn" style={{ justifyContent: 'center' }}><Download size={16} /> Download Invoice PDF</button>
                         </div>
-                        <button className="primary-btn" style={{ marginTop: '1.5rem', width: '100%', justifyContent: 'center' }}><Download size={16} /> Download Invoice PDF</button>
                     </div>
                 </div>
             </div>
@@ -68,7 +69,12 @@ const Billing = () => {
                     <h1 className="page-title">Business Billing</h1>
                     <p className="page-subtitle">Manage, view, and generate B2B client invoices.</p>
                 </div>
-                <button className="primary-btn">Generate Bills</button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button className="primary-btn" onClick={fetchBilling} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <RefreshCw size={16} /> Refresh
+                    </button>
+                    <button className="primary-btn">Generate Bills</button>
+                </div>
             </div>
 
             <div className="table-container">
@@ -90,24 +96,31 @@ const Billing = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {[1, 2, 3, 4].map((item) => (
-                            <tr key={item}>
-                                <td><span style={{ fontWeight: 600 }}>#BILL-100{item}</span></td>
-                                <td><span style={{ color: 'var(--accent-primary)', cursor: 'pointer' }}>{"Tech Retailers (#BIZ-002" + item + ")"}</span></td>
-                                <td>Monthly</td>
-                                <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Sep 1 - Sep 30</td>
-                                <td><span style={{ fontWeight: 600 }}>₹{item * 14200}</span></td>
-                                <td><span style={{ fontWeight: 600, color: item === 1 ? 'var(--accent-warning)' : 'inherit' }}>₹{item === 1 ? 10000 : 0}</span></td>
-                                <td>
-                                    {item === 1 ? <span className="status-badge status-warning">Overdue</span> :
-                                        <span className="status-badge status-success">Paid</span>}
-                                </td>
-                                <td style={{ color: item === 1 ? 'var(--accent-warning)' : 'var(--text-muted)' }}>Oct 15, 2026</td>
-                                <td>
-                                    <button className="btn-icon" onClick={() => setViewDetails(true)}><FileText size={16} /></button>
-                                </td>
-                            </tr>
-                        ))}
+                        {loading ? (
+                            <tr><td colSpan="9" style={{ textAlign: 'center', padding: '2rem' }}>Loading billing accounts...</td></tr>
+                        ) : billingAccounts.length === 0 ? (
+                            <tr><td colSpan="9" style={{ textAlign: 'center', padding: '2rem' }}>No billing accounts found.</td></tr>
+                        ) : (
+                            billingAccounts.map((item) => (
+                                <tr key={item.billing_account_id}>
+                                    <td><span style={{ fontWeight: 600 }}>#BILL-{item.billing_account_id}</span></td>
+                                    <td><span style={{ color: 'var(--accent-primary)', cursor: 'pointer' }}>{item.company_name} (#BIZ-{item.business_id})</span></td>
+                                    <td>Monthly</td>
+                                    <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(item.period_start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(item.period_end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
+                                    <td><span style={{ fontWeight: 600 }}>₹{item.total_amount_calculated}</span></td>
+                                    <td><span style={{ fontWeight: 600, color: item.amount_due > 0 ? 'var(--accent-warning)' : 'inherit' }}>₹{item.amount_due}</span></td>
+                                    <td>
+                                        <span className={`status-badge ${item.billing_status_name === 'Paid' ? 'status-success' : 'status-warning'}`}>
+                                            {item.billing_status_name || 'Pending'}
+                                        </span>
+                                    </td>
+                                    <td style={{ color: item.amount_due > 0 ? 'var(--accent-warning)' : 'var(--text-muted)' }}>{new Date(item.period_end_date).getTime() < Date.now() && item.amount_due > 0 ? 'Overdue' : 'N/A'}</td>
+                                    <td>
+                                        <button className="btn-icon" onClick={() => setSelectedBill(item)}><FileText size={16} /></button>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>

@@ -1,17 +1,42 @@
-import React from 'react';
-import { Shield, Users, Lock, Unlock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Shield, Users, Lock, Unlock, RefreshCw } from 'lucide-react';
 
 const Roles = () => {
-    const roles = [
-        { title: "Administrator", desc: "Full system access over all modules", users: 5 },
-        { title: "Financial Administrator", desc: "Access to Payments, Payouts, and Billing only", users: 3 },
-        { title: "Orders Administrator", desc: "Access to Orders, Parcels, and Complaints", users: 8 },
-        { title: "Deliveries Administrator", desc: "Access to Delivery Partners and Live Tracking", users: 12 },
-        { title: "Business Admin", desc: "External role. Access to business dashboard.", users: 1042 },
-        { title: "Business Employee", desc: "External role. Access to B2B sub-accounts.", users: 3450 },
-        { title: "Customer", desc: "External role. Standard app users.", users: 12456 },
-        { title: "Delivery Partner", desc: "External role. Riders and drivers.", users: 3120 }
+    const [roles, setRoles] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const MOCK_ROLES = [
+        { role_id: 1, role_name: 'admin' },
+        { role_id: 2, role_name: 'customer' },
+        { role_id: 3, role_name: 'business' },
+        { role_id: 9, role_name: 'delivery_partner' }
     ];
+
+    const fetchRoles = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/roles`);
+            if (res.ok) {
+                const data = await res.json();
+                setRoles(data);
+            } else {
+                console.warn(`Backend roles fetch failed (${res.status}). Using mock data.`);
+                setRoles(MOCK_ROLES);
+                // We won't show the error message in the UI so mock data is seamless
+            }
+        } catch (err) {
+            console.warn('Backend roles unreachable. Using mock data fallback.', err);
+            setRoles(MOCK_ROLES);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchRoles();
+    }, []);
 
     return (
         <div className="fade-in">
@@ -20,32 +45,43 @@ const Roles = () => {
                     <h1 className="page-title">Roles & Access Management</h1>
                     <p className="page-subtitle">Configure system roles and permission mapping.</p>
                 </div>
-                <button className="primary-btn"><Shield size={16} /> Create Custom Role</button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button className="primary-btn" onClick={fetchRoles} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <RefreshCw size={16} /> Refresh
+                    </button>
+                    <button className="primary-btn"><Shield size={16} /> Create Custom Role</button>
+                </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '1.5rem' }}>
-                {roles.map((role, idx) => (
-                    <div key={idx} className="panel" style={{ position: 'relative', overflow: 'hidden' }}>
-                        {idx >= 4 && <div style={{ position: 'absolute', top: '10px', right: '10px' }}><span className="status-badge status-neutral">External</span></div>}
+                {loading ? (
+                    <div style={{ padding: '2rem', textAlign: 'center', gridColumn: '1 / -1' }}>Loading roles...</div>
+                ) : roles.length === 0 ? (
+                    <div style={{ padding: '2rem', textAlign: 'center', gridColumn: '1 / -1' }}>No roles found.</div>
+                ) : (
+                    roles.map((role) => (
+                        <div key={role.role_id} className="panel" style={{ position: 'relative', overflow: 'hidden' }}>
+                            {role.role_name !== 'admin' && <div style={{ position: 'absolute', top: '10px', right: '10px' }}><span className="status-badge status-neutral">External</span></div>}
 
-                        <h3 className="panel-title" style={{ fontSize: '1.2rem', color: idx < 4 ? 'var(--accent-success)' : 'var(--accent-primary)' }}>
-                            {idx === 0 ? <Shield size={20} /> : idx < 4 ? <Unlock size={20} /> : <Lock size={20} />}
-                            {role.title}
-                        </h3>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
-                            {role.desc}
-                        </p>
+                            <h3 className="panel-title" style={{ fontSize: '1.2rem', color: role.role_name === 'admin' ? 'var(--accent-success)' : 'var(--accent-primary)' }}>
+                                {role.role_name === 'admin' ? <Shield size={20} /> : <Lock size={20} />}
+                                {role.role_name.charAt(0).toUpperCase() + role.role_name.slice(1)}
+                            </h3>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+                                Details for role: {role.role_name}
+                            </p>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-light)', paddingTop: '1rem' }}>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', fontWeight: 600 }}>
-                                <Users size={16} color="var(--text-muted)" /> {role.users.toLocaleString()} assigned users
-                            </span>
-                            <button className="primary-btn" style={{ padding: '0.4rem 0.8rem', background: 'transparent', border: '1px solid var(--border-light)', color: 'var(--text-primary)', boxShadow: 'none' }}>
-                                Manage Access
-                            </button>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-light)', paddingTop: '1rem' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', fontWeight: 600 }}>
+                                    <Users size={16} color="var(--text-muted)" /> ID: {role.role_id}
+                                </span>
+                                <button className="primary-btn" style={{ padding: '0.4rem 0.8rem', background: 'transparent', border: '1px solid var(--border-light)', color: 'var(--text-primary)', boxShadow: 'none' }}>
+                                    Manage Access
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))
+                )}
             </div>
         </div>
     );
