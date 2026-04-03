@@ -2,6 +2,7 @@ const pool = require("../config/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
+const { computeOrderRoute } = require("./dijkstraService");
 dotenv.config();
 
 const SECRET_KEY = process.env.JWT_KEY;
@@ -612,7 +613,8 @@ const createOrder = async (
   sender_lat,
   sender_lng,
   receiver_lat,
-  receiver_lng
+  receiver_lng,
+  payment_method
 ) => {
   try {
     //Extract token data
@@ -633,7 +635,8 @@ const createOrder = async (
         receiver_name, receiver_phone, receiver_address, receiver_state,
         receiver_city, receiver_pincode, special_instruction, 
         order_amount, delivery_status_id, created_at, is_complete,
-        urgency, fare_breakdown, sender_lat, sender_lng, receiver_lat, receiver_lng
+        urgency, fare_breakdown, sender_lat, sender_lng, receiver_lat, receiver_lng,
+        payment_method
       )
       VALUES (
         $1, $2, $3, $4, $5,
@@ -641,7 +644,8 @@ const createOrder = async (
         $10, $11, $12, $13,
         $14, $15, $16, $17,
         (SELECT value_id FROM value_master WHERE value_name = 'Order Placed'),
-        NOW(), $18, $19, $20, $21, $22, $23, $24
+        NOW(), $18, $19, $20, $21, $22, $23, $24,
+        $25
       )
     `;
 
@@ -669,7 +673,8 @@ const createOrder = async (
       sender_lat ?? null,
       sender_lng ?? null,
       receiver_lat ?? null,
-      receiver_lng ?? null
+      receiver_lng ?? null,
+      payment_method || 'cash'
     ];
 
     const orderResult = await pool.query(orderQuery, orderValues);
@@ -694,9 +699,24 @@ const createOrder = async (
       [orderId]
     );
 
+    // If it's an out-of-city order, compute its route
+    let computedRoute = null;
+    if (fare_breakdown && fare_breakdown.mode !== 'LOCAL_DELIVERY') {
+      computedRoute = await computeOrderRoute(
+          sender_lat, sender_lng, receiver_lat, receiver_lng
+      );
+      if (computedRoute) {
+        await pool.query(
+            `UPDATE orders SET route_data = $1 WHERE order_id = $2`,
+            [JSON.stringify(computedRoute), orderId]
+        );
+      }
+    }
+
     return {
       orderData: orderData.rows,
-      parcelData: parcelData.rows
+      parcelData: parcelData.rows,
+      routeData: computedRoute
     };
 
   } catch (error) {
@@ -867,6 +887,11 @@ const updateOrderStatus = async (orderId, dpId, statusName) => {
         INSERT INTO order_status_history (order_id, delivery_status_id, updating_partner_id, updated_at)
         VALUES ($1, (SELECT value_id FROM value_master WHERE value_name = $2), $3, NOW())
       `, [orderId, statusName, dpId]);
+
+      // Auto-create payout record when order is delivered
+      if (isComplete) {
+        await createPayoutForOrder(result.rows[0]);
+      }
     }
 
     return result.rows[0] ?? null;
@@ -888,19 +913,112 @@ const adminUpdateOrderStatus = async (orderId, statusName) => {
     `, [statusName, isComplete, orderId]);
 
     if (result.rowCount > 0) {
-      // Log the change for tracking
-      // userId is null for admin updates but since the schema expects 'updating_partner_id' (which is just a user_id)...
-      // We'll leave it NULL or find out if there's an admin user_id. 
-      // Hardcoded admin doesn't have a DB user entry usually, but let's check.
       await pool.query(`
         INSERT INTO order_status_history (order_id, delivery_status_id, updating_partner_id, updated_at)
         VALUES ($1, (SELECT value_id FROM value_master WHERE value_name = $2), NULL, NOW())
       `, [orderId, statusName]);
+
+      // Auto-create payout record when order is delivered
+      if (isComplete) {
+        await createPayoutForOrder(result.rows[0]);
+      }
     }
 
     return result.rows[0] ?? null;
   } catch (error) {
     console.error('Error in adminUpdateOrderStatus:', error);
+    return null;
+  }
+};
+
+// ── PAYMENT/PAYOUT LOGIC ──────────────────────────────────────────
+
+const DP_SHARE_PERCENT = 0.80;
+const ADMIN_SHARE_PERCENT = 0.20;
+
+/** Auto-create a payout record when an order is delivered */
+const createPayoutForOrder = async (order) => {
+  try {
+    if (!order.delivery_partner_id) {
+      console.warn(`Cannot create payout for order ${order.order_id}: no delivery partner assigned`);
+      return null;
+    }
+
+    // Check if payout already exists for this order
+    const existingPayout = await pool.query(
+      `SELECT payout_order_id FROM delivery_partner_payout_orders WHERE order_id = $1`,
+      [order.order_id]
+    );
+    if (existingPayout.rowCount > 0) {
+      console.log(`Payout already exists for order ${order.order_id}`);
+      return existingPayout.rows[0];
+    }
+
+    const orderAmount = Number(order.order_amount) || 0;
+    const dpShare = Math.round(orderAmount * DP_SHARE_PERCENT * 100) / 100;
+    const adminShare = Math.round(orderAmount * ADMIN_SHARE_PERCENT * 100) / 100;
+    const paymentMethod = order.payment_method || 'cash';
+    const isCash = paymentMethod === 'cash';
+
+    // For cash orders: DP collected cash, so status = 'cash_pending' (DP must deposit cash first)
+    // For online orders: Admin already has money, status = 'awaiting_payout' (Admin can pay DP directly)
+    const status = isCash ? 'cash_pending' : 'awaiting_payout';
+
+    const result = await pool.query(`
+      INSERT INTO delivery_partner_payout_orders 
+        (order_id, delivery_partner_id, order_amount, dp_share, admin_share, 
+         payment_method, cash_collected, status, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+      RETURNING *
+    `, [
+      order.order_id,
+      order.delivery_partner_id,
+      orderAmount,
+      dpShare,
+      adminShare,
+      paymentMethod,
+      isCash ? orderAmount : 0, // DP collected the full amount in cash
+      status
+    ]);
+
+    console.log(`✅ Payout record created for order ${order.order_id}: DP gets ₹${dpShare}, Admin gets ₹${adminShare} (${paymentMethod})`);
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error creating payout for order:', error);
+    return null;
+  }
+};
+
+/** Admin confirms that the DP has deposited cash */
+const confirmCashDeposit = async (payoutId) => {
+  try {
+    const result = await pool.query(`
+      UPDATE delivery_partner_payout_orders
+      SET cash_deposited = true, cash_deposit_confirmed = true, 
+          status = 'awaiting_payout', confirmed_at = NOW()
+      WHERE payout_order_id = $1 AND status = 'cash_pending'
+      RETURNING *
+    `, [payoutId]);
+    return result.rows[0] ?? null;
+  } catch (error) {
+    console.error('Error confirming cash deposit:', error);
+    return null;
+  }
+};
+
+/** Admin pays the DP their 80% share */
+const processPayoutToDp = async (payoutId, transactionId, notes) => {
+  try {
+    const result = await pool.query(`
+      UPDATE delivery_partner_payout_orders
+      SET is_paid = true, status = 'paid', paid_at = NOW(),
+          partner_transaction_id = $2, notes = $3
+      WHERE payout_order_id = $1 AND status = 'awaiting_payout'
+      RETURNING *
+    `, [payoutId, transactionId || null, notes || null]);
+    return result.rows[0] ?? null;
+  } catch (error) {
+    console.error('Error processing payout:', error);
     return null;
   }
 };
@@ -1245,6 +1363,145 @@ const getDashboardStats = async () => {
     }
 };
 
+const getAllParcels = async () => {
+    try {
+        const query = `
+            SELECT p.parcel_id, p.order_id, p.weight, 
+                   pt.value_name as parcel_type_name, 
+                   ps.value_name as parcel_size_name
+            FROM parcels p
+            LEFT JOIN value_master pt ON p.parcel_type_id = pt.value_id
+            LEFT JOIN value_master ps ON p.parcel_size_id = ps.value_id
+            ORDER BY p.parcel_id DESC
+        `;
+        const { rows } = await pool.query(query);
+        return rows;
+    } catch (err) {
+        throw err;
+    }
+};
+
+const getAllPayments = async () => {
+    try {
+        const query = `
+            SELECT t.*, pm.value_name as payment_method_name, ps.value_name as payment_status_name
+            FROM transactions t
+            LEFT JOIN value_master pm ON t.payment_method_id = pm.value_id
+            LEFT JOIN value_master ps ON t.payment_status_id = ps.value_id
+            ORDER BY t.created_at DESC
+        `;
+        const { rows } = await pool.query(query);
+        return rows;
+    } catch (err) {
+        throw err;
+    }
+};
+
+const getAllPayouts = async () => {
+    try {
+        const query = `
+            SELECT p.*, 
+                   dp.first_name, dp.last_name, dp.phone as dp_phone, dp.email as dp_email
+            FROM delivery_partner_payout_orders p
+            LEFT JOIN users dp ON p.delivery_partner_id = dp.user_id
+            ORDER BY 
+                CASE p.status 
+                    WHEN 'cash_pending' THEN 1 
+                    WHEN 'awaiting_payout' THEN 2 
+                    WHEN 'paid' THEN 3 
+                    ELSE 4 
+                END,
+                p.created_at DESC
+        `;
+        const { rows } = await pool.query(query);
+        return rows;
+    } catch (err) {
+        throw err;
+    }
+};
+
+const getPayoutStats = async () => {
+    try {
+        const query = `
+            SELECT 
+                COUNT(*) FILTER (WHERE status = 'cash_pending') as cash_pending_count,
+                COUNT(*) FILTER (WHERE status = 'awaiting_payout') as awaiting_payout_count,
+                COUNT(*) FILTER (WHERE status = 'paid') as paid_count,
+                COALESCE(SUM(dp_share) FILTER (WHERE status = 'awaiting_payout'), 0) as total_awaiting,
+                COALESCE(SUM(dp_share) FILTER (WHERE status = 'cash_pending'), 0) as total_cash_pending,
+                COALESCE(SUM(dp_share) FILTER (WHERE status = 'paid'), 0) as total_paid_out,
+                COALESCE(SUM(admin_share), 0) as total_admin_earnings
+            FROM delivery_partner_payout_orders
+        `;
+        const { rows } = await pool.query(query);
+        return rows[0];
+    } catch (err) {
+        throw err;
+    }
+};
+
+const getAllComplaints = async () => {
+    try {
+        const query = `
+            SELECT c.*, ct.value_name as complaint_type_name, cs.value_name as complaint_status_name,
+                   u.first_name, u.last_name, u.email
+            FROM complaints c
+            LEFT JOIN value_master ct ON c.complaint_type_id = ct.value_id
+            LEFT JOIN value_master cs ON c.complaint_status_id = cs.value_id
+            LEFT JOIN users u ON c.user_id = u.user_id
+            ORDER BY c.created_at DESC
+        `;
+        const { rows } = await pool.query(query);
+        return rows;
+    } catch (err) {
+        throw err;
+    }
+};
+
+const getAllBilling = async () => {
+    try {
+        const query = `
+            SELECT b.*, bc.company_name, bs.value_name as billing_status_name
+            FROM business_billing_accounts b
+            LEFT JOIN business_clients bc ON b.business_id = bc.business_id
+            LEFT JOIN value_master bs ON b.billing_status_id = bs.value_id
+            ORDER BY b.generated_at DESC
+        `;
+        const { rows } = await pool.query(query);
+        return rows;
+    } catch (err) {
+        throw err;
+    }
+};
+
+const getAllRoles = async () => {
+    try {
+        const query = `
+            SELECT * FROM roles_master ORDER BY role_id ASC
+        `;
+        const { rows } = await pool.query(query);
+        return rows;
+    } catch (err) {
+        throw err;
+    }
+};
+
+const getAllMasterData = async () => {
+    try {
+        const query = `
+            SELECT vm.*, mm.type_name as category_title
+            FROM value_master vm
+            LEFT JOIN main_master mm ON vm.master_id = mm.master_id
+            ORDER BY mm.master_id ASC, vm.value_id ASC
+        `;
+        const { rows } = await pool.query(query);
+        return rows;
+    } catch (err) {
+        throw err;
+    }
+};
+
+
 module.exports = { 
     registerCustomer, 
     registerBusiness, 
@@ -1269,6 +1526,16 @@ module.exports = {
     getDeliveryPartnerOrders,
     getDashboardStats,
     getAllBusinesses,
-    adminUpdateOrderStatus
+    adminUpdateOrderStatus,
+    getAllParcels,
+    getAllPayments,
+    getAllPayouts,
+    getPayoutStats,
+    getAllComplaints,
+    getAllBilling,
+    getAllRoles,
+    getAllMasterData,
+    confirmCashDeposit,
+    processPayoutToDp
 };
 

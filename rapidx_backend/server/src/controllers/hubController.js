@@ -71,8 +71,36 @@ const deleteHub = async (req, res) => {
     }
 };
 
+// ─── ADDITIONS FOR ROUTING ───────────────────────────────────────────────────
+const dijkstraService = require('../services/dijkstraService');
+
+const getConnections = async (req, res) => {
+    try {
+        const result = await pool.query(`SELECT * FROM hub_connections WHERE is_active = true`);
+        res.status(200).json(result.rows);
+    } catch (err) {
+        console.error('Error fetching connections:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+const getOrderRouteData = async (req, res) => {
+    try {
+        const route = await dijkstraService.getOrderRoute(req.params.id);
+        if (!route) {
+            return res.status(404).json({ error: 'Route not available or not applicable for this order' });
+        }
+        res.status(200).json(route);
+    } catch (err) {
+        console.error('Error fetching order route:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
 module.exports = {
     getAllHubs,
     createHub,
     deleteHub,
+    getConnections,
+    getOrderRouteData
 };

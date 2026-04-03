@@ -86,7 +86,7 @@ const login = async (req, res) => {
 
 const createOrder = async (req, res) => {
     try {
-        const { sender_name, sender_phone, sender_address, sender_state, sender_city, sender_pincode, receiver_name, receiver_phone, receiver_address, receiver_state, receiver_city, receiver_pincode, special_instruction, order_amount, parcels, urgency, fare_breakdown, sender_lat, sender_lng, receiver_lat, receiver_lng } = req.body;
+        const { sender_name, sender_phone, sender_address, sender_state, sender_city, sender_pincode, receiver_name, receiver_phone, receiver_address, receiver_state, receiver_city, receiver_pincode, special_instruction, order_amount, parcels, urgency, fare_breakdown, sender_lat, sender_lng, receiver_lat, receiver_lng, payment_method } = req.body;
 
         const bearerToken = req.headers.authorization;
 
@@ -97,7 +97,7 @@ const createOrder = async (req, res) => {
             return;
         }
 
-        const response = await userService.createOrder(authToken, sender_name, sender_phone, sender_address, sender_state, sender_city, sender_pincode, receiver_name, receiver_phone, receiver_address, receiver_state, receiver_city, receiver_pincode, special_instruction, order_amount, parcels, urgency, fare_breakdown, sender_lat, sender_lng, receiver_lat, receiver_lng);
+        const response = await userService.createOrder(authToken, sender_name, sender_phone, sender_address, sender_state, sender_city, sender_pincode, receiver_name, receiver_phone, receiver_address, receiver_state, receiver_city, receiver_pincode, special_instruction, order_amount, parcels, urgency, fare_breakdown, sender_lat, sender_lng, receiver_lat, receiver_lng, payment_method);
 
         if (response !== false && response.orderData.length > 0 && response.parcelData.length > 0) {
             res.status(201).json({ orderData: response.orderData, parcelData: response.parcelData });
@@ -411,6 +411,105 @@ const getAllBusinessesHandler = async (req, res) => {
     }
 };
 
+const getAllParcelsHandler = async (req, res) => {
+    try {
+        const parcels = await userService.getAllParcels();
+        res.status(200).json(parcels);
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+const getAllPaymentsHandler = async (req, res) => {
+    try {
+        const payments = await userService.getAllPayments();
+        res.status(200).json(payments);
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+const getAllPayoutsHandler = async (req, res) => {
+    try {
+        const payouts = await userService.getAllPayouts();
+        res.status(200).json(payouts);
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+const getAllComplaintsHandler = async (req, res) => {
+    try {
+        const complaints = await userService.getAllComplaints();
+        res.status(200).json(complaints);
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+const getAllBillingHandler = async (req, res) => {
+    try {
+        const billing = await userService.getAllBilling();
+        res.status(200).json(billing);
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+const getAllRolesHandler = async (req, res) => {
+    try {
+        const roles = await userService.getAllRoles();
+        res.status(200).json(roles);
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+const getAllMasterDataHandler = async (req, res) => {
+    try {
+        const masterdata = await userService.getAllMasterData();
+        res.status(200).json(masterdata);
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// ── PAYOUT MANAGEMENT HANDLERS ──────────────────────────────
+const getPayoutStatsHandler = async (req, res) => {
+    try {
+        const stats = await userService.getPayoutStats();
+        res.status(200).json(stats);
+    } catch (error) {
+        console.error('Error fetching payout stats:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+const confirmCashDepositHandler = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await userService.confirmCashDeposit(id);
+        if (!result) return res.status(404).json({ error: 'Payout not found or not in cash_pending status' });
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error confirming cash deposit:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+const processPayoutHandler = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { transaction_id, notes } = req.body;
+        const result = await userService.processPayoutToDp(id, transaction_id, notes);
+        if (!result) return res.status(404).json({ error: 'Payout not found or not in awaiting_payout status' });
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error processing payout:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
 module.exports = {
     registerCustomer,
     registerBusiness,
@@ -435,7 +534,16 @@ module.exports = {
     getCustomerOrdersHandler,
     getDeliveryPartnerOrdersHandler,
     getDashboardStatsHandler,
-    getAllBusinessesHandler
+    getAllBusinessesHandler,
+    getAllParcelsHandler,
+    getAllPaymentsHandler,
+    getAllPayoutsHandler,
+    getAllComplaintsHandler,
+    getAllBillingHandler,
+    getAllRolesHandler,
+    getAllMasterDataHandler,
+    getPayoutStatsHandler,
+    confirmCashDepositHandler,
+    processPayoutHandler
 };
-
 

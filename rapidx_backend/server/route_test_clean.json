@@ -1,0 +1,23 @@
+{
+  "type": "intercity",
+  "origin_hub_id": 2,
+  "destination_hub_id": 1,
+  "hub_path": [
+    2,
+    1
+  ],
+  "hub_names": [
+    "Mumbai",
+    "Delhi"
+  ],
+  "hub_types": [
+    "national",
+    "national"
+  ],
+  "total_route_km": 1157.16,
+  "hub_network_km": 1140.77,
+  "last_mile_pickup_km": 0,
+  "last_mile_delivery_km": 16.39,
+  "hub_count": 2,
+  "computed_at": "2026-03-31T11:47:18.607Z"
+}

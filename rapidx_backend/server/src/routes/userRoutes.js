@@ -43,4 +43,15 @@ router.get("/delivery-partner-orders", userController.getDeliveryPartnerOrdersHa
 router.get("/dashboard-stats", userController.getDashboardStatsHandler);
 router.get("/businesses", userController.getAllBusinessesHandler);
 
+router.get("/parcels", userController.getAllParcelsHandler);
+router.get("/payments", userController.getAllPaymentsHandler);
+router.get("/payouts", userController.getAllPayoutsHandler);
+router.get("/payouts/stats", userController.getPayoutStatsHandler);
+router.post("/payouts/:id/confirm-cash", userController.confirmCashDepositHandler);
+router.post("/payouts/:id/pay", userController.processPayoutHandler);
+router.get("/complaints", userController.getAllComplaintsHandler);
+router.get("/billing", userController.getAllBillingHandler);
+router.get("/roles", userController.getAllRolesHandler);
+router.get("/masterdata", userController.getAllMasterDataHandler);
+
 module.exports = router;
