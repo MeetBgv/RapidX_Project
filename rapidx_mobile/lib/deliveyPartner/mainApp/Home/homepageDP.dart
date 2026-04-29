@@ -16,6 +16,7 @@ import 'package:newrapidx/api_constants.dart';
 
 import 'order_notification_overlay.dart';
 import 'dp_navigation_page.dart';
+import '../Wallet/walletPageDP.dart';
 import '../Profile/helpBottomSheetDP.dart';
 
 class HomePageDP extends ConsumerStatefulWidget {
@@ -39,11 +40,15 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
 
   // ─── Pending notification shown ──────────────────────────────────────
   bool _showingNotification = false;
+  bool _isAccepting = false; // New flag to prevent duplicate dialogs during acceptance
+  bool _isUpdatingStatus = false; // New debouncer for status updates
 
-  // ─── Today Summary Real Time Data ────────────────────────────────────
+  // ─── Summary Metrics & Filtering ────────────────────────────────────
+  String _selectedTimeframe = '7d'; // Default to 7 days
   int _totalOrders = 0;
   double _totalEarnings = 0.0;
   double _pendingEarnings = 0.0;
+  bool _isSummaryLoading = false;
 
   @override
   void initState() {
@@ -52,13 +57,14 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
     _fetchTodaySummary(); // Load real time data
   }
 
-  Future<void> _fetchTodaySummary() async {
+  Future<void> _fetchTodaySummary({bool showLoading = false}) async {
+    if (showLoading) setState(() => _isSummaryLoading = true);
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token') ?? '';
       
       final res = await http.get(
-        Uri.parse('${ApiConstants.baseUrl}/users/delivery-partner-orders'),
+        Uri.parse('${ApiConstants.baseUrl}/users/delivery-partner-orders?timeframe=$_selectedTimeframe&t=${DateTime.now().millisecondsSinceEpoch}'),
         headers: {'Authorization': 'Bearer $token'},
       );
       
@@ -70,25 +76,39 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
         double pending = 0;
         
         for (var order in orders) {
-          final statusId = order['delivery_status_id'] as int? ?? 0;
-          final amount = (order['order_amount'] as num?)?.toDouble() ?? 0.0;
-          
-          if (statusId == 37) { // Delivered
-            total++;
-            earnings += amount;
-          } else if (statusId >= 33 && statusId < 37) { // Active/Pending
-            pending += amount;
+          try {
+            final statusId = int.tryParse(order['delivery_status_id']?.toString() ?? '0') ?? 0;
+            final amount = double.tryParse(order['order_amount']?.toString() ?? '0') ?? 0.0;
+            
+            // Critical: dp_share must be parsed from string safely
+            final dpShareRaw = order['dp_share']?.toString();
+            final dpShare = (dpShareRaw != null && dpShareRaw != 'null') 
+                ? (double.tryParse(dpShareRaw) ?? (amount * 0.8))
+                : (amount * 0.8);
+            
+            if (statusId == 37) { // Delivered
+              total++;
+              earnings += dpShare;
+            } else if (statusId >= 33 && statusId < 37) { // Active/Pending
+              pending += dpShare;
+            }
+          } catch (itemError) {
+            debugPrint('Error parsing order summary item: $itemError');
           }
         }
         
-        setState(() {
-          _totalOrders = total;
-          _totalEarnings = earnings;
-          _pendingEarnings = pending;
-        });
+        if (mounted) {
+          setState(() {
+            _totalOrders = total;
+            _totalEarnings = earnings;
+            _pendingEarnings = pending;
+          });
+        }
       }
     } catch (e) {
       debugPrint('Fetch summary error: $e');
+    } finally {
+      if (mounted) setState(() => _isSummaryLoading = false);
     }
   }
 
@@ -117,6 +137,7 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
     _pollingTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (!mounted) return;
       _checkForNewOrder();
+      _fetchTodaySummary();
     });
     // Also check immediately
     _checkForNewOrder();
@@ -161,7 +182,7 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
   String? _notifiedOrderId;
 
   Future<void> _checkForNewOrder() async {
-    if (_activeOrder != null) return;
+    if (_activeOrder != null || _isAccepting) return;
     try {
       final res = await http.get(
         Uri.parse('${ApiConstants.baseUrl}/users/orders/pending'),
@@ -232,6 +253,8 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
 
   // ─── Accept order ─────────────────────────────────────────────────────
   Future<void> _acceptOrder(String orderId) async {
+    if (_isAccepting) return;
+    setState(() => _isAccepting = true);
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token') ?? '';
@@ -263,6 +286,10 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
     } catch (e) {
       debugPrint('Accept order error: $e');
       _showSnack('Network error while accepting order.');
+    } finally {
+      if (mounted) {
+        setState(() => _isAccepting = false);
+      }
     }
   }
 
@@ -283,6 +310,11 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
           final data = json.decode(body);
           if (data != null) {
             setState(() => _activeOrder = data as Map<String, dynamic>);
+            
+            // Show recovery toast if it was a cold start (not just a background refresh)
+            if (data['delivery_status_id'] != 37) { // If not delivered
+              _showSnack('Recovered active delivery session.');
+            }
           }
         }
       }
@@ -295,7 +327,9 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
 
   // ─── Update order status ──────────────────────────────────────────────
   Future<void> _updateStatus(String statusName) async {
-    if (_activeOrder == null) return;
+    if (_activeOrder == null || _isUpdatingStatus) return;
+    setState(() => _isUpdatingStatus = true);
+    
     final orderId = _activeOrder!['order_id'].toString();
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -320,7 +354,78 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
       }
     } catch (e) {
       debugPrint('Update status error: $e');
+    } finally {
+      if (mounted) setState(() => _isUpdatingStatus = false);
     }
+  }
+
+  void _confirmPickupAndCash(String nextStatusName) {
+    if (_activeOrder == null) return;
+    final order = _activeOrder!;
+    final isOnline = (order['payment_method']?.toString().toLowerCase() ?? 'cash') == 'online';
+    final amount = double.tryParse(order['order_amount']?.toString() ?? '0') ?? 0.0;
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.r)),
+        title: Row(
+          children: [
+            Icon(
+              isOnline ? Icons.verified_user_rounded : Icons.payments_rounded,
+              color: isOnline ? DPColors.successGreen : DPColors.warningOrange,
+              size: 26.sp,
+            ),
+            SizedBox(width: 12.w),
+            Text(isOnline ? 'Confirm Pickup' : 'Collect Cash', style: DPTheme.h3),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isOnline 
+                ? 'This order is PREPAID.'
+                : 'This is a CASH order.',
+              style: DPTheme.body.copyWith(
+                fontWeight: FontWeight.bold,
+                color: isOnline ? DPColors.successGreen : DPColors.warningOrange,
+              ),
+            ),
+            SizedBox(height: 12.h),
+            Text(
+              isOnline 
+                ? 'Confirm that you have picked up the parcel from the sender. No cash collection is required.'
+                : 'Please collect ₹${amount.toStringAsFixed(0)} from the sender before starting the delivery.',
+              style: DPTheme.body.copyWith(color: DPColors.greyDark),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Back', style: TextStyle(color: DPColors.greyMedium)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _updateStatus(nextStatusName);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isOnline ? DPColors.successGreen : DPColors.warningOrange,
+              elevation: 0,
+              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+            ),
+            child: Text(
+              isOnline ? 'Confirm Pickup' : 'Cash Collected', 
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showSnack(String message) {
@@ -438,7 +543,8 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
               children: [
                 _buildHeader().animate().fade(duration: 400.ms).slideY(
                     begin: -0.1, end: 0, duration: 400.ms),
-                SizedBox(height: 32.h),
+
+                SizedBox(height: 24.h),
                 _buildTodaySummary().animate().fade(
                     duration: 400.ms, delay: 100.ms),
                 SizedBox(height: 20.h),
@@ -573,14 +679,44 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
     );
   }
 
+
+  String _getTimeframeLabel() {
+    switch (_selectedTimeframe) {
+      case '7d': return '7 Days';
+      case '1m': return 'Month';
+      case '1y': return 'Year';
+      default: return 'Lifetime';
+    }
+  }
+
   Widget _buildTodaySummary() {
-    return Row(
+    if (_isSummaryLoading) {
+      return SizedBox(
+        height: 70.h,
+        child: const Center(child: CircularProgressIndicator(color: DPColors.deepBlue)),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(child: _summaryCard('Earnings', '₹ ${_totalEarnings.toStringAsFixed(0)}', Icons.account_balance_wallet_outlined, DPColors.deepBlue)),
-        SizedBox(width: 16.w),
-        Expanded(child: _summaryCard('Orders', '$_totalOrders', Icons.check_circle_outline, DPColors.teal)),
-        SizedBox(width: 16.w),
-        Expanded(child: _summaryCard('Pending', '₹ ${_pendingEarnings.toStringAsFixed(0)}', Icons.pending_outlined, DPColors.warningOrange)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '${_getTimeframeLabel()} Summary',
+              style: DPTheme.bodySmall.copyWith(color: DPColors.greyMedium, fontWeight: FontWeight.w600),
+            ),
+            Icon(Icons.query_stats_rounded, size: 14.sp, color: DPColors.greyMedium),
+          ],
+        ),
+        SizedBox(height: 12.h),
+        Row(
+          children: [
+            Expanded(child: _summaryCard('Earnings', '₹ ${_totalEarnings.toStringAsFixed(0)}', Icons.account_balance_wallet_outlined, DPColors.deepBlue)),
+            SizedBox(width: 16.w),
+            Expanded(child: _summaryCard('Orders', '$_totalOrders', Icons.check_circle_outline, DPColors.teal)),
+          ],
+        ),
       ],
     );
   }
@@ -745,16 +881,36 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
                   padding: EdgeInsets.symmetric(
                       horizontal: 10.w, vertical: 6.h),
                   decoration: BoxDecoration(
-                    color: DPColors.successGreen.withOpacity(0.08),
+                    color: (order['payment_method']?.toString().toLowerCase() == 'online')
+                        ? DPColors.successGreen.withOpacity(0.12)
+                        : DPColors.warningOrange.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(20.r),
                   ),
-                  child: Text(
-                    '₹${(order['order_amount'] as num?)?.toStringAsFixed(0) ?? '0'}',
-                    style: TextStyle(
-                      color: DPColors.successGreen,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13.sp,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                       Text(
+                         '₹${(double.tryParse(order['order_amount']?.toString() ?? '0') ?? 0.0).toStringAsFixed(0)}',
+                         style: TextStyle(
+                           color: (order['payment_method']?.toString().toLowerCase() == 'online')
+                               ? DPColors.successGreen
+                               : DPColors.warningOrange,
+                           fontWeight: FontWeight.bold,
+                           fontSize: 14.sp,
+                         ),
+                       ),
+                       SizedBox(height: 2.h),
+                        Text(
+                          (order['payment_method']?.toString().toLowerCase() == 'online') ? 'PREPAID' : 'CASH',
+                          style: TextStyle(
+                             color: (order['payment_method']?.toString().toLowerCase() == 'online') ? DPColors.successGreen : DPColors.warningOrange,
+                             fontSize: 9.sp, 
+                             fontWeight: FontWeight.w900,
+                             letterSpacing: 0.8,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ],
@@ -804,7 +960,13 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
                     width: double.infinity,
                     height: 54.h,
                     child: ElevatedButton(
-                      onPressed: () => _updateStatus(nextStatusName),
+                      onPressed: () {
+                        if (statusId == 33) {
+                          _confirmPickupAndCash(nextStatusName);
+                        } else {
+                          _updateStatus(nextStatusName);
+                        }
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: DPColors.deepBlue,
                         elevation: 0,
@@ -1013,10 +1175,10 @@ class _HomePageDPState extends ConsumerState<HomePageDP> {
       })),
       (_quickActionItem(
           Icons.account_balance_wallet_outlined, 'Wallet', () {
-             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                 content: Text("Wallet coming soon!", style: GoogleFonts.baloo2(color: Colors.white)),
-                 backgroundColor: DPColors.deepBlue,
-             ));
+             Navigator.push(
+               context,
+               MaterialPageRoute(builder: (context) => const WalletPageDP()),
+             );
           })),
       (_quickActionItem(Icons.settings_outlined, 'Settings', widget.onSettingsTap ?? () {})),
     ];

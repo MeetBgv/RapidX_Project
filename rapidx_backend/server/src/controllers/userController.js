@@ -74,35 +74,247 @@ const login = async (req, res) => {
     try {
         const response = await userService.login(email, password);
 
-        if (response !== false) {
-            res.status(200).json({ token: response.token, role: response.role, user: response.user });
-        } else {
-            res.status(401).json("Invalid credentials");
-        }
+        res.status(200).json({ token: response.token, role: response.role, user: response.user });
     } catch (error) {
         console.log("Error in login: ", error);
+        res.status(401).json({ error: error.message || "Invalid credentials" });
+    }
+};
+
+const getPayoutsByPartnerHandler = async (req, res) => {
+    try {
+        const result = await userService.getPayoutsByPartner();
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error getting payouts by partner:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+const confirmPartnerBulkCashHandler = async (req, res) => {
+    try {
+        const { id } = req.params; // delivery_partner_id
+        const result = await userService.confirmPartnerCash(id);
+        res.status(200).json({ message: 'All pending cash payments confirmed', count: result.length });
+    } catch (error) {
+        console.error('Error confirming partner bulk cash:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+const processPartnerBulkPayoutHandler = async (req, res) => {
+    try {
+        const { id } = req.params; 
+        const { transaction_id, notes } = req.body;
+        console.log(`[PAYOUT] Processing bulk payout for partner ${id}. Txn: ${transaction_id}`);
+        const result = await userService.processPartnerBulkPayout(id, transaction_id, notes);
+        console.log(`[PAYOUT] Success! Updated ${result.length} orders.`);
+        res.status(200).json({ message: 'All partner payouts processed successfully', count: result.length });
+    } catch (error) {
+        console.error('Error processing bulk partner payout:', error);
+        res.status(500).json({ error: 'Server error: ' + error.message });
+    }
+};
+
+const toggleBanHandler = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { is_banned } = req.body;
+        const result = await userService.toggleUserBan(id, is_banned);
+        if (result) res.status(200).json({ message: `User ${is_banned ? 'banned' : 'unbanned'} successfully` });
+        else res.status(400).json({ error: "Failed to update user status" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const deleteUserHandler = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await userService.deleteUser(id);
+        if (result) res.status(200).json({ message: "User deleted successfully" });
+        else res.status(400).json({ error: "Failed to delete user" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const adminCreateUserHandler = async (req, res) => {
+    try {
+        const result = await userService.adminCreateUser(req.body);
+        if (result) res.status(201).json(result);
+        else res.status(400).json({ error: "Failed to create user" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const createMasterCategoryHandler = async (req, res) => {
+    try {
+        const { type_name } = req.body;
+        const result = await userService.createMasterCategory(type_name);
+        if (result) res.status(201).json(result);
+        else res.status(400).json({ error: "Failed to create category" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const createMasterValueHandler = async (req, res) => {
+    try {
+        const { master_id, value_name } = req.body;
+        const result = await userService.createMasterValue(master_id, value_name);
+        if (result) res.status(201).json(result);
+        else res.status(400).json({ error: "Failed to create value" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const createComplaintHandler = async (req, res) => {
+    try {
+        const { order_id, complaint_type_id, description } = req.body;
+        const bearerToken = req.headers.authorization;
+        if (!bearerToken || !bearerToken.startsWith('Bearer ')) {
+            return res.status(401).json('Unauthorized');
+        }
+        const authToken = bearerToken.split(' ')[1];
+        const jwt = require('jsonwebtoken');
+        const payload = jwt.decode(authToken);
+        const userId = payload?.userId;
+        if (!userId) return res.status(401).json('Invalid token');
+
+        const result = await userService.createComplaint(order_id, userId, complaint_type_id, description);
+        if (result) res.status(201).json(result);
+        else res.status(400).json({ error: "Failed to create complaint" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const getMyComplaintsHandler = async (req, res) => {
+    try {
+        const bearerToken = req.headers.authorization;
+        if (!bearerToken || !bearerToken.startsWith('Bearer ')) {
+            return res.status(401).json('Unauthorized');
+        }
+        const authToken = bearerToken.split(' ')[1];
+        const jwt = require('jsonwebtoken');
+        const payload = jwt.decode(authToken);
+        const userId = payload?.userId;
+        if (!userId) return res.status(401).json('Invalid token');
+
+        const result = await userService.getMyComplaints(userId);
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const resolveComplaintHandler = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { admin_note } = req.body;
+        const result = await userService.resolveComplaint(id, admin_note);
+        if (result) res.status(200).json({ message: "Complaint marked as resolved" });
+        else res.status(400).json({ error: "Failed to resolve complaint" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const generateBillsHandler = async (req, res) => {
+    try {
+        const result = await userService.generateBilling();
+        res.status(200).json({ message: `Successfully generated ${result} billing records` });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 };
 
 const createOrder = async (req, res) => {
     try {
-        const { sender_name, sender_phone, sender_address, sender_state, sender_city, sender_pincode, receiver_name, receiver_phone, receiver_address, receiver_state, receiver_city, receiver_pincode, special_instruction, order_amount, parcels, urgency, fare_breakdown, sender_lat, sender_lng, receiver_lat, receiver_lng, payment_method } = req.body;
-
         const bearerToken = req.headers.authorization;
+        let authToken;
 
         if (bearerToken && bearerToken.startsWith("Bearer ")) {
-            var authToken = bearerToken.split(" ")[1];
+            authToken = bearerToken.split(" ")[1];
         } else {
-            res.status(401).json("Unauthorized");
-            return;
+            return res.status(401).json("Unauthorized");
         }
 
-        const response = await userService.createOrder(authToken, sender_name, sender_phone, sender_address, sender_state, sender_city, sender_pincode, receiver_name, receiver_phone, receiver_address, receiver_state, receiver_city, receiver_pincode, special_instruction, order_amount, parcels, urgency, fare_breakdown, sender_lat, sender_lng, receiver_lat, receiver_lng, payment_method);
+        console.log('--- DEBUG: NEW ORDER BODY ---');
+        console.log(JSON.stringify(req.body, null, 2));
 
-        if (response !== false && response.orderData.length > 0 && response.parcelData.length > 0) {
-            res.status(201).json({ orderData: response.orderData, parcelData: response.parcelData });
+        const {
+            sender_name,
+            sender_phone,
+            sender_address,
+            sender_state,
+            sender_city,
+            sender_pincode,
+            receiver_name,
+            receiver_phone,
+            receiver_address,
+            receiver_state,
+            receiver_city,
+            receiver_pincode,
+            special_instruction,
+            order_amount,
+            parcels,
+            urgency,
+            fare_breakdown,
+            sender_lat,
+            sender_lng,
+            receiver_lat,
+            receiver_lng,
+            payment_method
+        } = req.body;
+
+        // Robust payment method extraction (handle camelCase and case sensitivity)
+        let resolvedPaymentMethod = payment_method || req.body.paymentMethod || 'cash';
+        if (typeof resolvedPaymentMethod === 'string') {
+            resolvedPaymentMethod = resolvedPaymentMethod.toLowerCase();
+        }
+
+        const orderOptions = {
+            authToken,
+            sender_name,
+            sender_phone,
+            sender_address,
+            sender_state,
+            sender_city,
+            sender_pincode,
+            receiver_name,
+            receiver_phone,
+            receiver_address,
+            receiver_state,
+            receiver_city,
+            receiver_pincode,
+            special_instruction,
+            order_amount,
+            parcels,
+            urgency,
+            fare_breakdown,
+            sender_lat,
+            sender_lng,
+            receiver_lat,
+            receiver_lng,
+            payment_method: resolvedPaymentMethod
+        };
+
+        const response = await userService.createOrder(authToken, orderOptions);
+
+        if (response) {
+            console.log('Order created successfully. Confirmed Method:', orderOptions.payment_method);
+            res.status(201).json({ 
+                message: "Order placed successfully", 
+                order: response,
+                payment_method_confirmed: orderOptions.payment_method
+            });
         } else {
-            res.status(400).json("Error in creating order");
+            console.error('Order creation failed in userService');
+            res.status(400).json({ message: "Order placement failed" });
         }
     } catch (error) {
         console.log("Error in Creating Order: ", error);
@@ -381,9 +593,11 @@ const getDeliveryPartnerOrdersHandler = async (req, res) => {
         const jwt = require('jsonwebtoken');
         const payload = jwt.decode(authToken);
         const userId = payload?.userId;
+        const timeframe = req.query.timeframe || 'all';
+
         if (!userId) return res.status(401).json('Invalid token');
 
-        const orders = await userService.getDeliveryPartnerOrders(userId);
+        const orders = await userService.getDeliveryPartnerOrders(userId, timeframe);
         res.status(200).json(orders);
     } catch (error) {
         console.error('Error fetching delivery partner orders:', error);
@@ -393,7 +607,8 @@ const getDeliveryPartnerOrdersHandler = async (req, res) => {
 
 const getDashboardStatsHandler = async (req, res) => {
     try {
-        const stats = await userService.getDashboardStats();
+        const timeframe = req.query.timeframe || 'all';
+        const stats = await userService.getDashboardStats(timeframe);
         res.status(200).json(stats);
     } catch (error) {
         console.error('Error in getDashboardStatsHandler:', error);
@@ -510,6 +725,27 @@ const processPayoutHandler = async (req, res) => {
     }
 };
 
+const getDeliveryPartnerWalletHandler = async (req, res) => {
+    try {
+        const bearerToken = req.headers.authorization;
+        if (!bearerToken || !bearerToken.startsWith('Bearer ')) {
+            return res.status(401).json('Unauthorized');
+        }
+        const authToken = bearerToken.split(' ')[1];
+        const jwt = require('jsonwebtoken');
+        const payload = jwt.decode(authToken);
+        const dpId = payload?.userId;
+        if (!dpId) return res.status(401).json('Invalid token');
+
+        const timeframe = req.query.timeframe || 'all';
+        const wallet = await userService.getDeliveryPartnerWalletDetails(dpId, timeframe);
+        res.status(200).json(wallet);
+    } catch (error) {
+        console.error('Error fetching DP wallet:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
 module.exports = {
     registerCustomer,
     registerBusiness,
@@ -542,8 +778,21 @@ module.exports = {
     getAllBillingHandler,
     getAllRolesHandler,
     getAllMasterDataHandler,
+    toggleBanHandler,
+    deleteUserHandler,
+    adminCreateUserHandler,
+    createMasterCategoryHandler,
+    createMasterValueHandler,
+    createComplaintHandler,
+    getMyComplaintsHandler,
+    resolveComplaintHandler,
+    generateBillsHandler,
     getPayoutStatsHandler,
     confirmCashDepositHandler,
-    processPayoutHandler
+    processPayoutHandler,
+    getPayoutsByPartnerHandler,
+    confirmPartnerBulkCashHandler,
+    processPartnerBulkPayoutHandler,
+    getDeliveryPartnerWalletHandler
 };
 

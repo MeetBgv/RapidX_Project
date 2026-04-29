@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:newrapidx/providers/userDataProvider.dart';
+import 'package:newrapidx/Common/myComplaintsPage.dart';
+import 'package:newrapidx/Common/complaintDialog.dart';
 
 class AccountSettingsPage extends StatelessWidget {
   const AccountSettingsPage({super.key});
@@ -114,7 +116,7 @@ class AccountSettingsPage extends StatelessWidget {
                           ),
                         ),
 
-                        const Divider(height: 1, thickness: 1),
+                        Divider(height: 1.h, thickness: 1),
 
                         // Middle Section: Address
                         Padding(
@@ -124,7 +126,7 @@ class AccountSettingsPage extends StatelessWidget {
                             style: GoogleFonts.baloo2(
                               fontSize: 14.sp,
                               color: Colors.black,
-                              height: 1.4,
+                              height: 1.4.h,
                             ),
                           ),
                         ),
@@ -132,19 +134,34 @@ class AccountSettingsPage extends StatelessWidget {
                         // Bottom Section: Buttons
                         Padding(
                           padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.w),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          child: Wrap(
+                            alignment: WrapAlignment.spaceBetween,
+                            spacing: 12.w,
+                            runSpacing: 8.h,
                             children: [
                               GestureDetector(
                                 onTap: () {
-                                  // Static action
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => const MyComplaintsPage()));
                                 },
                                 child: Text(
-                                  "Change Password",
+                                  "My Complaints",
                                   style: GoogleFonts.baloo2(
                                     fontSize: 14.sp,
                                     fontWeight: FontWeight.w700,
-                                    color: Colors.black,
+                                    color: const Color(0xff234C6A),
+                                  ),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  showComplaintBottomSheet(context);
+                                },
+                                child: Text(
+                                  "Raise Complaint",
+                                  style: GoogleFonts.baloo2(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xff234C6A),
                                   ),
                                 ),
                               ),
@@ -293,7 +310,7 @@ class AccountSettingsPage extends StatelessWidget {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10.r),
-                      borderSide: const BorderSide(color: Color(0xff234C6A)),
+                      borderSide: BorderSide(color: Color(0xff234C6A)),
                     ),
                   ),
                 ),
@@ -330,7 +347,7 @@ class AccountSettingsPage extends StatelessWidget {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10.r),
-                      borderSide: const BorderSide(color: Color(0xff234C6A)),
+                      borderSide: BorderSide(color: Color(0xff234C6A)),
                     ),
                   ),
                 ),
@@ -398,7 +415,7 @@ class AccountSettingsPage extends StatelessWidget {
                 alignment: Alignment.topRight,
                 child: GestureDetector(
                   onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.close, size: 20),
+                  child: Icon(Icons.close, size: 20.sp),
                 ),
               ),
               SizedBox(height: 10.h),

@@ -114,7 +114,7 @@ class _LiveTrackingPageState extends State<LiveTrackingPage> {
 
   /// Real polling to fetch partner location and order status from the backend.
   void _startPolling() {
-    _pollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+    _pollingTimer = Timer.periodic(const Duration(seconds: 2), (timer) async {
       if (!mounted) return;
       await _fetchLiveUpdates();
     });

@@ -717,6 +717,13 @@ tr:last-child td {
   margin-bottom: 1.5rem;
 }
 
+.grid-4-cols {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
 .panel {
   background: var(--bg-glass);
   border: 1px solid var(--border-light);

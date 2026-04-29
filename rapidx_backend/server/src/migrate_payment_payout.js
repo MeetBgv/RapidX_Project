@@ -48,6 +48,7 @@ async function migratePaymentPayout() {
             { col: 'cash_deposit_confirmed', type: 'BOOLEAN DEFAULT false' },
             { col: 'status', type: "VARCHAR(30) DEFAULT 'pending'" },
             { col: 'notes', type: 'TEXT' },
+            { col: 'partner_transaction_id', type: 'VARCHAR(100)' },
             { col: 'paid_at', type: 'TIMESTAMP' },
             { col: 'confirmed_at', type: 'TIMESTAMP' },
         ];

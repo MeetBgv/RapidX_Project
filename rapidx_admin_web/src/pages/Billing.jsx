@@ -25,6 +25,23 @@ const Billing = () => {
         fetchBilling();
     }, []);
 
+    const handleGenerateBills = async () => {
+        if (!window.confirm("Generate current month's bills for all business clients?")) return;
+        
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/billing/generate`, {
+                method: 'POST'
+            });
+            if (res.ok) {
+                const data = await res.json();
+                alert(data.message);
+                fetchBilling();
+            }
+        } catch (err) {
+            alert('Error generating bills: ' + err.message);
+        }
+    };
+
     if (selectedBill) {
         return (
             <div className="fade-in">
@@ -73,7 +90,7 @@ const Billing = () => {
                     <button className="primary-btn" onClick={fetchBilling} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <RefreshCw size={16} /> Refresh
                     </button>
-                    <button className="primary-btn">Generate Bills</button>
+                    <button className="primary-btn" onClick={handleGenerateBills}>Generate Bills</button>
                 </div>
             </div>
 

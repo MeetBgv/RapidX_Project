@@ -49,22 +49,20 @@ const Parcels = () => {
                         <tr>
                             <th>Parcel ID</th>
                             <th>Order ID</th>
-                            <th>Parcel Type</th>
                             <th>Parcel Size</th>
                             <th>Weight Config</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>Loading parcels...</td></tr>
+                            <tr><td colSpan="4" style={{ textAlign: 'center', padding: '2rem' }}>Loading parcels...</td></tr>
                         ) : parcels.length === 0 ? (
-                            <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>No parcels found.</td></tr>
+                            <tr><td colSpan="4" style={{ textAlign: 'center', padding: '2rem' }}>No parcels found.</td></tr>
                         ) : (
                             parcels.map((item) => (
                                 <tr key={item.parcel_id}>
                                     <td><span style={{ fontWeight: 600 }}>PRC-{item.parcel_id}</span></td>
                                     <td><span style={{ color: 'var(--accent-primary)', cursor: 'pointer' }}>#ORD-{item.order_id}</span></td>
-                                    <td>{item.parcel_type_name || 'N/A'}</td>
                                     <td><span className="status-badge status-info">
                                         {item.parcel_size_name || 'N/A'}
                                     </span></td>

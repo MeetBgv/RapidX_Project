@@ -6,13 +6,6 @@ const Roles = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const MOCK_ROLES = [
-        { role_id: 1, role_name: 'admin' },
-        { role_id: 2, role_name: 'customer' },
-        { role_id: 3, role_name: 'business' },
-        { role_id: 9, role_name: 'delivery_partner' }
-    ];
-
     const fetchRoles = async () => {
         setLoading(true);
         setError(null);
@@ -22,13 +15,10 @@ const Roles = () => {
                 const data = await res.json();
                 setRoles(data);
             } else {
-                console.warn(`Backend roles fetch failed (${res.status}). Using mock data.`);
-                setRoles(MOCK_ROLES);
-                // We won't show the error message in the UI so mock data is seamless
+                setError('Failed to fetch roles from server');
             }
         } catch (err) {
-            console.warn('Backend roles unreachable. Using mock data fallback.', err);
-            setRoles(MOCK_ROLES);
+            setError('Error connecting to backend');
         } finally {
             setLoading(false);
         }
@@ -56,6 +46,8 @@ const Roles = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '1.5rem' }}>
                 {loading ? (
                     <div style={{ padding: '2rem', textAlign: 'center', gridColumn: '1 / -1' }}>Loading roles...</div>
+                ) : error ? (
+                    <div style={{ padding: '2rem', textAlign: 'center', gridColumn: '1 / -1', color: 'var(--accent-danger)' }}>{error}</div>
                 ) : roles.length === 0 ? (
                     <div style={{ padding: '2rem', textAlign: 'center', gridColumn: '1 / -1' }}>No roles found.</div>
                 ) : (

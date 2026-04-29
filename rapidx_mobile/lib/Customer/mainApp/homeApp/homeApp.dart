@@ -1,5 +1,9 @@
 import 'dart:async';
 import 'dart:ui';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:newrapidx/api_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -35,8 +39,42 @@ class _homeAppState extends State<homeApp> {
     pages = [
       HomeContent(onNavigate: _navigateToTab),
       ordersApp(key: _ordersKey, initialIndex: ordersInitialIndex),
-      profileApp()
+      profileApp(),
     ];
+    _checkActiveOrdersOnStartup();
+  }
+
+  Future<void> _checkActiveOrdersOnStartup() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token') ?? '';
+      if (token.isEmpty) return;
+
+      final res = await http.get(
+        Uri.parse('${ApiConstants.baseUrl}/users/customer-orders?t=${DateTime.now().millisecondsSinceEpoch}'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (res.statusCode == 200) {
+        final List<dynamic> data = json.decode(res.body);
+        bool hasActiveOrder = data.any((item) => item['is_complete'] != true);
+        
+        if (hasActiveOrder && mounted) {
+          // Switch to orders tab automatically
+          _navigateToTab(1, 0);
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Recovered active order session.'),
+              backgroundColor: Color(0xff56A3A6),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("Error checking active orders on startup: $e");
+    }
   }
 
   void _navigateToTab(int tabIndex, int subTabIndex) {
@@ -54,19 +92,40 @@ class _homeAppState extends State<homeApp> {
           context: context,
           builder: (context) => AlertDialog(
             backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-            title: Text("Quit Application",
-                style: GoogleFonts.baloo2(fontWeight: FontWeight.bold, color: const Color(0xff234C6A))),
-            content: Text("Do you want to quit the application?",
-                style: GoogleFonts.baloo2(color: Colors.grey.shade700)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            title: Text(
+              "Quit Application",
+              style: GoogleFonts.baloo2(
+                fontWeight: FontWeight.bold,
+                color: const Color(0xff234C6A),
+              ),
+            ),
+            content: Text(
+              "Do you want to quit the application?",
+              style: GoogleFonts.baloo2(color: Colors.grey.shade700),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: Text("No", style: GoogleFonts.baloo2(color: Colors.grey, fontWeight: FontWeight.w600)),
+                child: Text(
+                  "No",
+                  style: GoogleFonts.baloo2(
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
               TextButton(
                 onPressed: () => SystemNavigator.pop(),
-                child: Text("Yes", style: GoogleFonts.baloo2(color: Colors.red, fontWeight: FontWeight.bold)),
+                child: Text(
+                  "Yes",
+                  style: GoogleFonts.baloo2(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
@@ -108,14 +167,18 @@ class _homeAppState extends State<homeApp> {
                     children: [
                       Icon(
                         Icons.home_outlined,
-                        color: currentIndex == 0 ? const Color(0xffDE9325) : Colors.grey,
+                        color: currentIndex == 0
+                            ? const Color(0xffDE9325)
+                            : Colors.grey,
                       ),
                       Text(
                         "Home",
                         style: GoogleFonts.baloo2(
                           fontSize: 10.sp,
                           fontWeight: FontWeight.w500,
-                          color: currentIndex == 0 ? const Color(0xffDE9325) : Colors.grey,
+                          color: currentIndex == 0
+                              ? const Color(0xffDE9325)
+                              : Colors.grey,
                         ),
                       ),
                     ],
@@ -133,14 +196,18 @@ class _homeAppState extends State<homeApp> {
                     children: [
                       Icon(
                         Icons.delivery_dining_outlined,
-                        color: currentIndex == 1 ? const Color(0xffDE9325) : Colors.grey,
+                        color: currentIndex == 1
+                            ? const Color(0xffDE9325)
+                            : Colors.grey,
                       ),
                       Text(
                         "Orders",
                         style: GoogleFonts.baloo2(
                           fontSize: 10.sp,
                           fontWeight: FontWeight.w500,
-                          color: currentIndex == 1 ? const Color(0xffDE9325) : Colors.grey,
+                          color: currentIndex == 1
+                              ? const Color(0xffDE9325)
+                              : Colors.grey,
                         ),
                       ),
                     ],
@@ -158,14 +225,18 @@ class _homeAppState extends State<homeApp> {
                     children: [
                       Icon(
                         Icons.person_2_outlined,
-                        color: currentIndex == 2 ? const Color(0xffDE9325) : Colors.grey,
+                        color: currentIndex == 2
+                            ? const Color(0xffDE9325)
+                            : Colors.grey,
                       ),
                       Text(
                         "Profile",
                         style: GoogleFonts.baloo2(
                           fontSize: 10.sp,
                           fontWeight: FontWeight.w500,
-                          color: currentIndex == 2 ? const Color(0xffDE9325) : Colors.grey,
+                          color: currentIndex == 2
+                              ? const Color(0xffDE9325)
+                              : Colors.grey,
                         ),
                       ),
                     ],
@@ -216,13 +287,16 @@ class _HomeContentState extends State<HomeContent>
   Future<void> _fetchAddress() async {
     try {
       final pos = await LocationService.getCurrentLocation();
-      final res = await LocationService.reverseGeocode(pos.latitude, pos.longitude);
+      final res = await LocationService.reverseGeocode(
+        pos.latitude,
+        pos.longitude,
+      );
       if (mounted) {
         setState(() {
           _currentAddress = "${res['displayName']}";
         });
       }
-    } catch(e) {
+    } catch (e) {
       if (mounted) {
         setState(() {
           _currentAddress = "Unable to detect location";
@@ -264,8 +338,8 @@ class _HomeContentState extends State<HomeContent>
           // ── Layer 1: Fixed Lottie Slider & Dots (Background) ──
           Positioned(
             top: 60.h, // Starts below the App Bar
-            left: 0,
-            right: 0,
+            left: 0.w,
+            right: 0.w,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -337,7 +411,7 @@ class _HomeContentState extends State<HomeContent>
                         color: isActive
                             ? Colors.grey.shade600
                             : Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(3),
+                        borderRadius: BorderRadius.circular(3.r),
                       ),
                     );
                   }),
@@ -360,18 +434,18 @@ class _HomeContentState extends State<HomeContent>
                     // Shadow Caster: Short container to limit shadow to the top area
 
                     // Container(
-                    //   height: 10
+                    //   height: 10.h
                     //       .h, // Reduced height to limit the shadow to the top area only
                     //   width: double.infinity,
-                    //   decoration: const BoxDecoration(
+                    //   decoration: BoxDecoration(
                     //     borderRadius: BorderRadius.only(
-                    //       topLeft: Radius.circular(20),
-                    //       topRight: Radius.circular(20),
+                    //       topLeft: Radius.circular(20.r),
+                    //       topRight: Radius.circular(20.r),
                     //     ),
                     //     boxShadow: [
                     //       BoxShadow(
                     //         color: Color(0x26000000),
-                    //         blurRadius: 8,
+                    //         blurRadius: 8.r,
                     //         offset: Offset(0, -9),
                     //       ),
                     //     ],
@@ -380,20 +454,20 @@ class _HomeContentState extends State<HomeContent>
                     // Doodle Content(main container )
                     Container(
                       width: double.infinity,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          topRight: Radius.circular(20),
+                          topLeft: Radius.circular(20.r),
+                          topRight: Radius.circular(20.r),
                         ),
                       ),
                       child: Stack(
                         children: [
                           Positioned.fill(
                             child: ClipRRect(
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(20),
-                                topRight: Radius.circular(20),
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(20.r),
+                                topRight: Radius.circular(20.r),
                               ),
                               child: Opacity(
                                 opacity: 0.1,
@@ -412,16 +486,55 @@ class _HomeContentState extends State<HomeContent>
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _buildGreetingSection().animate().fade(duration: 500.ms).slideY(begin: 0.2, end: 0, duration: 500.ms),
+                                _buildGreetingSection()
+                                    .animate()
+                                    .fade(duration: 500.ms)
+                                    .slideY(
+                                      begin: 0.2,
+                                      end: 0,
+                                      duration: 500.ms,
+                                    ),
                                 SizedBox(height: 20.h),
-                                _buildLocationCard().animate().fade(duration: 500.ms, delay: 100.ms).slideY(begin: 0.2, end: 0, duration: 500.ms, delay: 100.ms),
+                                _buildLocationCard()
+                                    .animate()
+                                    .fade(duration: 500.ms, delay: 100.ms)
+                                    .slideY(
+                                      begin: 0.2,
+                                      end: 0,
+                                      duration: 500.ms,
+                                      delay: 100.ms,
+                                    ),
                                 SizedBox(height: 24.h),
-                                _buildQuickActions().animate().fade(duration: 500.ms, delay: 200.ms).slideY(begin: 0.2, end: 0, duration: 500.ms, delay: 200.ms),
+                                _buildQuickActions()
+                                    .animate()
+                                    .fade(duration: 500.ms, delay: 200.ms)
+                                    .slideY(
+                                      begin: 0.2,
+                                      end: 0,
+                                      duration: 500.ms,
+                                      delay: 200.ms,
+                                    ),
                                 SizedBox(height: 24.h),
-                                _buildServicesSection().animate().fade(duration: 500.ms, delay: 300.ms).slideY(begin: 0.2, end: 0, duration: 500.ms, delay: 300.ms),
+                                _buildServicesSection()
+                                    .animate()
+                                    .fade(duration: 500.ms, delay: 300.ms)
+                                    .slideY(
+                                      begin: 0.2,
+                                      end: 0,
+                                      duration: 500.ms,
+                                      delay: 300.ms,
+                                    ),
                                 SizedBox(height: 24.h),
-                                _buildPromoBanner().animate().fade(duration: 500.ms, delay: 400.ms).scale(begin: const Offset(0.9, 0.9), delay: 400.ms),
-                                SizedBox(height: 40.h), // Bottom padding for scroll
+                                _buildPromoBanner()
+                                    .animate()
+                                    .fade(duration: 500.ms, delay: 400.ms)
+                                    .scale(
+                                      begin: const Offset(0.9, 0.9),
+                                      delay: 400.ms,
+                                    ),
+                                SizedBox(
+                                  height: 40.h,
+                                ), // Bottom padding for scroll
                               ],
                             ),
                           ),
@@ -436,21 +549,21 @@ class _HomeContentState extends State<HomeContent>
 
           // ── Layer 3: Fixed App Bar ──
           Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
+            top: 0.h,
+            left: 0.w,
+            right: 0.w,
             child: Container(
               height: 60.h,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(12),
-                  bottomRight: Radius.circular(12),
+                  bottomLeft: Radius.circular(12.r),
+                  bottomRight: Radius.circular(12.r),
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: Color(0x26000000),
-                    blurRadius: 8,
+                    blurRadius: 8.r,
                     offset: Offset(0, 9),
                   ),
                 ],
@@ -466,9 +579,9 @@ class _HomeContentState extends State<HomeContent>
                     children: [
                       SizedBox(height: 15.h),
                       Padding(
-                        padding: const EdgeInsets.only(right: 10),
+                        padding: EdgeInsets.only(right: 10.w),
                         child: Text(
-                          "7 mins away",
+                          "",
                           style: GoogleFonts.baloo2(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.w500,
@@ -476,21 +589,21 @@ class _HomeContentState extends State<HomeContent>
                           ),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 10),
-                        child: Row(
-                          children: [
-                            Icon(Icons.location_on, size: 10.sp),
-                            Text(
-                              "Current location",
-                              style: GoogleFonts.baloo2(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      // Padding(
+                      //   padding: EdgeInsets.only(right: 10.w),
+                      //   child: Row(
+                      //     children: [
+                      //       Icon(Icons.location_on, size: 10.sp),
+                      //       Text(
+                      //         "Current location",
+                      //         style: GoogleFonts.baloo2(
+                      //           fontSize: 10.sp,
+                      //           fontWeight: FontWeight.w500,
+                      //         ),
+                      //       ),
+                      //     ],
+                      //   ),
+                      // ),
                     ],
                   ),
                 ],
@@ -524,7 +637,7 @@ class _HomeContentState extends State<HomeContent>
               fontSize: 16.sp,
               fontWeight: FontWeight.w600,
               color: Colors.black87,
-              height: 1.3,
+              height: 1.3.h,
             ),
           ),
           Text(
@@ -533,7 +646,7 @@ class _HomeContentState extends State<HomeContent>
               fontSize: 16.sp,
               fontWeight: FontWeight.w600,
               color: Colors.black87,
-              height: 1.3,
+              height: 1.3.h,
             ),
           ),
           SizedBox(height: 5.h),
@@ -543,7 +656,7 @@ class _HomeContentState extends State<HomeContent>
               fontSize: 10.sp,
               fontWeight: FontWeight.w400,
               color: Colors.black54,
-              height: 1.2,
+              height: 1.2.h,
             ),
           ),
         ],
@@ -583,11 +696,11 @@ class _HomeContentState extends State<HomeContent>
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
+            blurRadius: 12.r,
             offset: const Offset(0, 4),
           ),
         ],
@@ -642,10 +755,26 @@ class _HomeContentState extends State<HomeContent>
 
   Widget _buildQuickActions() {
     final actions = [
-      {'icon': Icons.local_shipping_outlined, 'label': 'Send Parcel', 'color': const Color(0xff56A3A6)},
-      {'icon': Icons.history_outlined, 'label': 'History', 'color': const Color(0xffDE9325)},
-      {'icon': Icons.account_balance_wallet_outlined, 'label': 'Wallet', 'color': const Color(0xff234C6A)},
-      {'icon': Icons.support_agent_outlined, 'label': 'Support', 'color': Colors.redAccent},
+      {
+        'icon': Icons.local_shipping_outlined,
+        'label': 'Send Parcel',
+        'color': const Color(0xff56A3A6),
+      },
+      {
+        'icon': Icons.history_outlined,
+        'label': 'History',
+        'color': const Color(0xffDE9325),
+      },
+      {
+        'icon': Icons.account_balance_wallet_outlined,
+        'label': 'Wallet',
+        'color': const Color(0xff234C6A),
+      },
+      {
+        'icon': Icons.support_agent_outlined,
+        'label': 'Support',
+        'color': Colors.redAccent,
+      },
     ];
 
     return Row(
@@ -717,7 +846,12 @@ class _HomeContentState extends State<HomeContent>
           child: Row(
             children: [
               _serviceItem("Express", "lightning", Icons.bolt, Colors.amber),
-              _serviceItem("Documents", "paper", Icons.description, Colors.blue),
+              _serviceItem(
+                "Documents",
+                "paper",
+                Icons.description,
+                Colors.blue,
+              ),
               _serviceItem("Fragile", "glass", Icons.wine_bar, Colors.purple),
               _serviceItem("Heavy", "truck", Icons.vibration, Colors.orange),
             ],
@@ -812,11 +946,11 @@ class _HomeContentState extends State<HomeContent>
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
+            blurRadius: 12.r,
             offset: const Offset(0, 4),
           ),
         ],
@@ -875,7 +1009,7 @@ class _HomeContentState extends State<HomeContent>
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xff56A3A6),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(10.r),
                 ),
                 elevation: 0,
               ),

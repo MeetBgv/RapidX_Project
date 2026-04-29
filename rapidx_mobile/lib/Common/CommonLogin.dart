@@ -302,12 +302,24 @@ class _customerLoginState extends ConsumerState<customerLogin> {
                         );
                       }
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Invalid credentials"),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                      try {
+                        final dynamic errorData = jsonDecode(response.body);
+                        final String errorMessage = errorData is Map ? (errorData['error'] ?? "Invalid credentials") : errorData.toString();
+                        
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(errorMessage),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Invalid credentials"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
                     }
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(

@@ -1,33 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Database, Plus, Edit2, Trash2, RefreshCw } from 'lucide-react';
+import { Database, Plus, Edit2, Trash2, RefreshCw, X } from 'lucide-react';
 
 const MasterData = () => {
     const [masterCategories, setMasterCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-
-    const MOCK_MASTER_DATA = [
-        { value_id: 1, value_name: 'Active', category_title: 'Account Status' },
-        { value_id: 2, value_name: 'Pending Verification', category_title: 'Account Status' },
-        { value_id: 3, value_name: 'Express Delivery', category_title: 'Delivery Type' },
-        { value_id: 4, value_name: 'Standard Delivery', category_title: 'Delivery Type' },
-        { value_id: 5, value_name: 'Two Wheeler', category_title: 'Vehicle Type' },
-        { value_id: 6, value_name: 'Four Wheeler', category_title: 'Vehicle Type' }
-    ];
+    const [showCategoryModal, setShowCategoryModal] = useState(false);
+    const [showValueModal, setShowValueModal] = useState(null); // Will hold the master_id
+    const [newCategoryName, setNewCategoryName] = useState('');
+    const [newValueName, setNewValueName] = useState('');
 
     const processMasterData = (data) => {
         const grouped = data.reduce((acc, curr) => {
             const category = curr.category_title || 'Uncategorized';
+            const masterId = curr.master_id;
             if (!acc[category]) {
-                acc[category] = [];
+                acc[category] = { master_id: masterId, items: [] };
             }
-            acc[category].push({ id: curr.value_id, name: curr.value_name });
+            acc[category].items.push({ id: curr.value_id, name: curr.value_name });
             return acc;
         }, {});
 
         const categoriesArray = Object.keys(grouped).map(key => ({
             title: key,
-            items: grouped[key]
+            master_id: grouped[key].master_id,
+            items: grouped[key].items
         }));
 
         setMasterCategories(categoriesArray);
@@ -42,15 +39,47 @@ const MasterData = () => {
                 const data = await res.json();
                 processMasterData(data);
             } else {
-                console.warn(`Backend masterdata fetch failed (${res.status}). Using fallback mock data.`);
-                processMasterData(MOCK_MASTER_DATA);
+                setError('Failed to fetch master data from server');
             }
         } catch (err) {
-            console.warn('Backend masterdata unreachable. Using fallback mock data.', err);
-            processMasterData(MOCK_MASTER_DATA);
+            setError('Error connecting to backend');
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleAddCategory = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/masterdata/category`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type_name: newCategoryName })
+            });
+            if (res.ok) {
+                alert('Category created successfully');
+                setShowCategoryModal(false);
+                setNewCategoryName('');
+                fetchMasterData();
+            }
+        } catch (err) { alert(err.message); }
+    };
+
+    const handleAddValue = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/masterdata/value`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ master_id: showValueModal, value_name: newValueName })
+            });
+            if (res.ok) {
+                alert('Value added successfully');
+                setShowValueModal(null);
+                setNewValueName('');
+                fetchMasterData();
+            }
+        } catch (err) { alert(err.message); }
     };
 
     useEffect(() => {
@@ -68,13 +97,15 @@ const MasterData = () => {
                     <button className="primary-btn" onClick={fetchMasterData} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <RefreshCw size={16} /> Refresh
                     </button>
-                    <button className="primary-btn"><Plus size={16} /> Add Category</button>
+                    <button className="primary-btn" onClick={() => setShowCategoryModal(true)}><Plus size={16} /> Add Category</button>
                 </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
                 {loading ? (
                     <div style={{ padding: '2rem', textAlign: 'center', gridColumn: '1 / -1' }}>Loading master data...</div>
+                ) : error ? (
+                    <div style={{ padding: '2rem', textAlign: 'center', gridColumn: '1 / -1', color: 'var(--accent-danger)' }}>{error}</div>
                 ) : masterCategories.length === 0 ? (
                     <div style={{ padding: '2rem', textAlign: 'center', gridColumn: '1 / -1' }}>No master data found.</div>
                 ) : (
@@ -82,7 +113,7 @@ const MasterData = () => {
                         <div key={idx} className="panel">
                             <h3 className="panel-title" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem' }}>
                                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Database size={16} color="var(--accent-primary)" /> {category.title}</span>
-                                <button className="btn-icon" style={{ width: '24px', height: '24px' }}><Plus size={14} /></button>
+                                <button className="btn-icon" style={{ width: '24px', height: '24px' }} onClick={() => setShowValueModal(category.master_id)}><Plus size={14} /></button>
                             </h3>
                             <ul style={{ listStyle: 'none', marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                 {category.items.map((item) => (
@@ -99,6 +130,48 @@ const MasterData = () => {
                     ))
                 )}
             </div>
+
+            {/* Add Category Modal */}
+            {showCategoryModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content" style={{ maxWidth: '400px' }}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">New Master Category</h2>
+                            <button className="close-btn" onClick={() => setShowCategoryModal(false)}><X /></button>
+                        </div>
+                        <form onSubmit={handleAddCategory}>
+                            <div className="info-row" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', border: 'none' }}>
+                                <label>Category Name (e.g., Delivery Status)</label>
+                                <input type="text" className="search-input" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} required />
+                            </div>
+                            <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
+                                <button type="submit" className="primary-btn" style={{ flex: 1 }}>Create Category</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Value Modal */}
+            {showValueModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content" style={{ maxWidth: '400px' }}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">Add Master Value</h2>
+                            <button className="close-btn" onClick={() => setShowValueModal(null)}><X /></button>
+                        </div>
+                        <form onSubmit={handleAddValue}>
+                            <div className="info-row" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', border: 'none' }}>
+                                <label>Value Name (e.g., In Transit)</label>
+                                <input type="text" className="search-input" value={newValueName} onChange={(e) => setNewValueName(e.target.value)} required />
+                            </div>
+                            <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
+                                <button type="submit" className="primary-btn" style={{ flex: 1 }}>Add Value</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

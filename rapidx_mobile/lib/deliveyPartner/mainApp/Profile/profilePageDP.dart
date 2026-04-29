@@ -7,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:newrapidx/Common/CommonLogin.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:newrapidx/Common/updateChecker.dart';
+import 'package:newrapidx/Common/myComplaintsPage.dart';
+import 'package:newrapidx/Common/complaintDialog.dart';
 
 import '../../theme/dp_theme.dart';
 import 'helpBottomSheetDP.dart';
@@ -99,6 +101,22 @@ class ProfilePageDP extends ConsumerWidget {
                   icon: Icons.system_update_outlined,
                   title: "Check for Updates",
                   onTap: () => UpdateChecker.checkForUpdates(context),
+                  showDivider: true,
+                ),
+                _buildMenuItem(
+                  icon: Icons.add_comment_outlined,
+                  title: "Raise Complaint",
+                  onTap: () {
+                    showComplaintBottomSheet(context);
+                  },
+                  showDivider: true,
+                ),
+                _buildMenuItem(
+                  icon: Icons.report_problem_outlined,
+                  title: "My Complaints",
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const MyComplaintsPage()));
+                  },
                   showDivider: false,
                 ),
               ]),

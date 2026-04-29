@@ -95,14 +95,14 @@ class _customerSignUpState extends State<customerSignUp> {
               decoration: InputDecoration(
                 hintText: "First Name",
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(100),
-                  borderSide: const BorderSide(color: Colors.grey, width: 2),
+                  borderRadius: BorderRadius.circular(100.r),
+                  borderSide: BorderSide(color: Colors.grey, width: 2.w),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(100),
-                  borderSide: const BorderSide(
+                  borderRadius: BorderRadius.circular(100.r),
+                  borderSide: BorderSide(
                     color: Color(0xff56A3A6),
-                    width: 2.7,
+                    width: 2.7.w,
                   ),
                 ),
               ),
@@ -116,14 +116,14 @@ class _customerSignUpState extends State<customerSignUp> {
               decoration: InputDecoration(
                 hintText: "Last Name",
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(100),
-                  borderSide: const BorderSide(color: Colors.grey, width: 2),
+                  borderRadius: BorderRadius.circular(100.r),
+                  borderSide: BorderSide(color: Colors.grey, width: 2.w),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(100),
-                  borderSide: const BorderSide(
+                  borderRadius: BorderRadius.circular(100.r),
+                  borderSide: BorderSide(
                     color: Color(0xff56A3A6),
-                    width: 2.7,
+                    width: 2.7.w,
                   ),
                 ),
               ),
@@ -141,14 +141,14 @@ class _customerSignUpState extends State<customerSignUp> {
                 hintText: "Phone Number",
                 counterText: "",
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(100),
-                  borderSide: const BorderSide(color: Colors.grey, width: 2),
+                  borderRadius: BorderRadius.circular(100.r),
+                  borderSide: BorderSide(color: Colors.grey, width: 2.w),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(100),
-                  borderSide: const BorderSide(
+                  borderRadius: BorderRadius.circular(100.r),
+                  borderSide: BorderSide(
                     color: Color(0xff56A3A6),
-                    width: 2.7,
+                    width: 2.7.w,
                   ),
                 ),
               ),
@@ -163,14 +163,14 @@ class _customerSignUpState extends State<customerSignUp> {
               decoration: InputDecoration(
                 hintText: "Email",
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(100),
-                  borderSide: const BorderSide(color: Colors.grey, width: 2),
+                  borderRadius: BorderRadius.circular(100.r),
+                  borderSide: BorderSide(color: Colors.grey, width: 2.w),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(100),
-                  borderSide: const BorderSide(
+                  borderRadius: BorderRadius.circular(100.r),
+                  borderSide: BorderSide(
                     color: Color(0xff56A3A6),
-                    width: 2.7,
+                    width: 2.7.w,
                   ),
                 ),
               ),
@@ -196,14 +196,14 @@ class _customerSignUpState extends State<customerSignUp> {
                   },
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(100),
-                  borderSide: const BorderSide(color: Colors.grey, width: 2),
+                  borderRadius: BorderRadius.circular(100.r),
+                  borderSide: BorderSide(color: Colors.grey, width: 2.w),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(100),
-                  borderSide: const BorderSide(
+                  borderRadius: BorderRadius.circular(100.r),
+                  borderSide: BorderSide(
                     color: Color(0xff56A3A6),
-                    width: 2.7,
+                    width: 2.7.w,
                   ),
                 ),
               ),

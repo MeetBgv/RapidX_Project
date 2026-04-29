@@ -89,7 +89,7 @@ class _PickupLocationPageState extends State<PickupLocationPage> {
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
+              blurRadius: 10.r,
               offset: const Offset(0, -5),
             ),
           ],
@@ -142,7 +142,7 @@ class _PickupLocationPageState extends State<PickupLocationPage> {
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
+                    blurRadius: 10.r,
                     offset: const Offset(0, 4),
                   ),
                 ],
@@ -158,7 +158,7 @@ class _PickupLocationPageState extends State<PickupLocationPage> {
                         Container(
                           width: 10.w,
                           height: 10.h,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: Colors.green,
                             shape: BoxShape.circle,
                           ),
@@ -227,7 +227,7 @@ class _PickupLocationPageState extends State<PickupLocationPage> {
                   SizedBox(height: 16.h),
 
                   // Horizontal Divider
-                  Divider(height: 1, color: Colors.grey.shade100),
+                  Divider(height: 1.h, color: Colors.grey.shade100),
 
                   SizedBox(height: 16.h),
 
@@ -353,7 +353,7 @@ class _PickupLocationPageState extends State<PickupLocationPage> {
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
+                      blurRadius: 10.r,
                       offset: const Offset(0, 4),
                     ),
                   ],
@@ -363,7 +363,7 @@ class _PickupLocationPageState extends State<PickupLocationPage> {
                   physics: const NeverScrollableScrollPhysics(),
                   padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                   itemCount: _results.length,
-                  separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade100),
+                  separatorBuilder: (_, __) => Divider(height: 1.h, color: Colors.grey.shade100),
                   itemBuilder: (context, index) {
                     final place = _results[index];
                     final parts = place.displayName.split(', ');
@@ -425,7 +425,7 @@ class _PickupLocationPageState extends State<PickupLocationPage> {
                                       style: GoogleFonts.baloo2(
                                         fontSize: 12.sp,
                                         color: Colors.grey.shade500,
-                                        height: 1.3,
+                                        height: 1.3.h,
                                       ),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,

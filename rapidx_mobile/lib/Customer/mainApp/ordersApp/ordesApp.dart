@@ -10,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:newrapidx/Common/liveTrackingPage.dart';
+import 'package:newrapidx/Common/complaintDialog.dart';
 
 import '../homeApp/homeApp.dart';
 
@@ -49,7 +50,7 @@ class ordersAppState extends State<ordersApp> {
   }
 
   void _startPolling() {
-    _timer = Timer.periodic(const Duration(seconds: 10), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 2), (timer) {
       if (mounted) {
         _fetchOrders(showLoading: false);
       }
@@ -160,9 +161,9 @@ class ordersAppState extends State<ordersApp> {
         children: [
           // ================= BACKGROUND IMAGE =================
           Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
+            left: 0.w,
+            right: 0.w,
+            bottom: 0.h,
 
             // 👉 Change opacity (0.0 = invisible, 1.0 = fully visible)
             child: Opacity(
@@ -221,20 +222,20 @@ class ordersAppState extends State<ordersApp> {
       // 👉 Change AppBar height
       height: 60.h,
 
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         // 👉 AppBar background color
         color: Colors.white,
 
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(12), // Corner radius
-          bottomRight: Radius.circular(12),
+          bottomLeft: Radius.circular(12.r), // Corner radius
+          bottomRight: Radius.circular(12.r),
         ),
 
         // 👉 Shadow below AppBar
         boxShadow: [
           BoxShadow(
             color: Color(0x26000000),
-            blurRadius: 8, // Blur amount
+            blurRadius: 8.r, // Blur amount
             offset: Offset(0, 9), // Shadow position
           ),
         ],
@@ -311,7 +312,7 @@ class ordersAppState extends State<ordersApp> {
           // 👉 Border color & thickness
           side: BorderSide(
             color: isSelected ? const Color(0xff234C6A) : Colors.grey.shade400,
-            width: 1.5, // Border thickness
+            width: 1.5.w, // Border thickness
           ),
 
           // 👉 Button padding (size)
@@ -319,7 +320,7 @@ class ordersAppState extends State<ordersApp> {
 
           // 👉 Rounded corners
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(25),
+            borderRadius: BorderRadius.circular(25.r),
           ),
 
           // 👉 Remove default shadow
@@ -368,7 +369,7 @@ class ordersAppState extends State<ordersApp> {
             : _buildOrderList(_pastOrders, false);
         break;
       default:
-        content = const SizedBox();
+        content = SizedBox();
     }
     
     return content.animate(key: ValueKey(selectedIndex)).fade(duration: 400.ms).slideX(begin: 0.1, end: 0, duration: 400.ms);
@@ -407,11 +408,11 @@ class ordersAppState extends State<ordersApp> {
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(12.r),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
+              blurRadius: 8.r,
               offset: const Offset(0, 4),
             ),
           ],
@@ -435,7 +436,7 @@ class ordersAppState extends State<ordersApp> {
                   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                   decoration: BoxDecoration(
                     color: isLive ? Colors.orange.shade50 : Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(8.r),
                   ),
                   child: Text(
                     order["status"] as String,
@@ -557,7 +558,7 @@ class ordersAppState extends State<ordersApp> {
                 height: 4.h,
                 decoration: BoxDecoration(
                   color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(2.r),
                 ),
               ),
               Expanded(
@@ -613,6 +614,24 @@ class ordersAppState extends State<ordersApp> {
                         _detailRow(Icons.phone, "Partner Contact", order["partnerPhone"]),
                     ]),
                     
+                    SizedBox(height: 20.h),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context); // Close details sheet first
+                          showComplaintBottomSheet(context, orderId: order['orderId']);
+                        },
+                        icon: const Icon(Icons.support_agent, color: Color(0xFFD97706)),
+                        label: Text("Report Issue / Complain", style: GoogleFonts.baloo2(color: const Color(0xFFD97706), fontSize: 14.sp, fontWeight: FontWeight.w600)),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Color(0xFFFEF3C7)),
+                          backgroundColor: const Color(0xFFFEF3C7).withOpacity(0.3),
+                          padding: EdgeInsets.symmetric(vertical: 12.h),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                        ),
+                      ),
+                    ),
                     SizedBox(height: 32.h),
                   ],
                 ),
@@ -648,7 +667,7 @@ class ordersAppState extends State<ordersApp> {
           padding: EdgeInsets.all(16.w),
           decoration: BoxDecoration(
             color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(12.r),
             border: Border.all(color: Colors.grey.shade100),
           ),
           child: Column(children: childrenList),

@@ -13,21 +13,21 @@ class ApiConstants {
   static const String emulatorIP = '10.0.2.2';
 
   // **TOGGLE THIS**
+  // Set to true to test against your local machine, false to use the Vercel hosted server.
+  static const bool useLocal = true; 
+
   // Set to true if testing on a Physical Device, false if on Emulator.
-  // Note: Your Wi-Fi IP (192.168.29.36) usually works for BOTH emulator and physical device!
   static const bool isPhysicalDevice = false;
 
   static const String vercelUrl = 'https://rapid-x-project.vercel.app/api';
 
   static String get baseUrl {
-    return vercelUrl;
-    // For local testing, you can uncomment this:
-    /*
+    if (!useLocal) return vercelUrl;
+    
     if (kIsWeb) {
       return 'http://localhost:3000/api';
     }
-    final String targetIP = isPhysicalDevice ? wifiIP : emulatorIP;
+    const String targetIP = isPhysicalDevice ? wifiIP : emulatorIP;
     return 'http://$targetIP:3000/api';
-    */
   }
 }

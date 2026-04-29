@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:newrapidx/Common/complaintDialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:newrapidx/api_constants.dart';
 import 'package:flutter/material.dart';
@@ -62,15 +63,19 @@ class _OrdersPageState extends State<OrdersPage> {
               ? "${parcels[0]['parcel_type']} • ${parcels[0]['parcel_size']}"
               : "Standard Parcel";
 
+          final amount = (item['order_amount'] as num?)?.toDouble() ?? 0.0;
+          final dpShare = (item['dp_share'] as num?)?.toDouble() ?? (amount * 0.8);
+
           return {
             "id": item['order_id']?.toString() ?? "OD-000",
             "date": DateTime.tryParse(item['created_at']?.toString() ?? '')?.toLocal() ?? DateTime.now(),
             "pickup": item['sender_address']?.toString() ?? "Unknown Pickup",
             "drop": item['receiver_address']?.toString() ?? "Unknown Drop",
-            "amount": "₹ ${item['order_amount'] ?? '0'}",
+            "amount": "₹ ${dpShare.toStringAsFixed(2)}",
             "status": item['is_complete'] == true ? "Paid" : "Pending",
             "parcel": parcelStr,
             "isCompleted": item['is_complete'] == true,
+            "paymentFlag": item['payment_method'] == 'online' ? 1 : 0,
           };
         }).toList();
 
@@ -227,7 +232,41 @@ class _OrdersPageState extends State<OrdersPage> {
                 ),
               ],
             ),
-            SizedBox(height: 16.h),
+            SizedBox(height: 12.h),
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: order['paymentFlag'] == 1 ? const Color(0xFFE0F2FE) : const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(6.r),
+                    border: Border.all(
+                      color: order['paymentFlag'] == 1 ? const Color(0xFF7DD3FC) : const Color(0xFFFDE68A),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        order['paymentFlag'] == 1 ? Icons.credit_card : Icons.money,
+                        size: 14.sp,
+                        color: order['paymentFlag'] == 1 ? const Color(0xFF0369A1) : const Color(0xFFD97706),
+                      ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        order['paymentFlag'] == 1 ? "Online (Flag 1)" : "Cash (Flag 0)",
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.bold,
+                          color: order['paymentFlag'] == 1 ? const Color(0xFF0369A1) : const Color(0xFFD97706),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12.h),
             IntrinsicHeight(
               child: Row(
                 children: [
@@ -362,12 +401,51 @@ class _OrdersPageState extends State<OrdersPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  Text("Payment Method", style: DPTheme.body),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: order['paymentFlag'] == 1 ? const Color(0xFFE0F2FE) : const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(6.r),
+                    ),
+                    child: Text(
+                      order['paymentFlag'] == 1 ? "Online (Flag 1)" : "Offline/Cash (Flag 0)",
+                      style: DPTheme.h3.copyWith(
+                        fontSize: 12.sp,
+                        color: order['paymentFlag'] == 1 ? const Color(0xFF0369A1) : const Color(0xFFD97706),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
                   Text("Total Earnings", style: DPTheme.body),
                   Text(
                     order['amount'],
                     style: DPTheme.h2.copyWith(color: DPColors.successGreen),
                   ),
                 ],
+              ),
+              SizedBox(height: 24.h),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context); // Close details sheet first
+                    showComplaintBottomSheet(context, orderId: order['id']);
+                  },
+                  icon: const Icon(Icons.support_agent, color: Color(0xFFD97706)),
+                  label: Text("Report Issue / Complain", style: DPTheme.h3.copyWith(color: const Color(0xFFD97706), fontSize: 14.sp)),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFFEF3C7)),
+                    backgroundColor: const Color(0xFFFEF3C7).withOpacity(0.3),
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                  ),
+                ),
               ),
             ],
           ),

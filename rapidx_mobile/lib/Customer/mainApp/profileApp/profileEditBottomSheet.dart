@@ -93,7 +93,7 @@ class _ProfileEditBottomSheetState extends State<ProfileEditBottomSheet> {
 
                 InkWell(
                   onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.close, size: 26),
+                  child: Icon(Icons.close, size: 26.sp),
                 ),
               ],
             ),
@@ -209,12 +209,12 @@ class _ProfileEditBottomSheetState extends State<ProfileEditBottomSheet> {
 
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16.r),
-          borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
+          borderSide: BorderSide(color: Colors.grey.shade200, width: 1.w),
         ),
 
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16.r),
-          borderSide: const BorderSide(color: Color(0xff234C6A), width: 1.5),
+          borderSide: BorderSide(color: Color(0xff234C6A), width: 1.5.w),
         ),
 
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),

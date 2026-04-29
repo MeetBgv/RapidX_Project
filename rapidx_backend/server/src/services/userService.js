@@ -19,7 +19,9 @@ const generateId = async (id) => {
       { id: 30, table: "users", column: "user_id" },
       { id: 40, table: "addresses", column: "address_id" },
       { id: 50, table: "orders", column: "order_id" },
-      { id: 51, table: "parcels", column: "parcel_id" }
+      { id: 51, table: "parcels", column: "parcel_id" },
+      { id: 60, table: "delivery_partner_payout_orders", column: "payout_order_id" },
+      { id: 80, table: "complaints", column: "complaint_id" }
     ]
 
     const currentVariableData = variableData.find((data) => data.id == id);
@@ -520,22 +522,27 @@ const login = async (email, password) => {
 
     if (checkUserResult.rowCount === 0) {
       console.log(`[DEBUG] Login failed: User with email "${email}" not found.`);
-      return false;
+      throw new Error("Invalid credentials");
     }
 
     const user = checkUserResult.rows[0];
-    console.log(`[DEBUG] User found in DB: ${user.user_id} (${user.email})`);
+    
+    // Check if user is deleted first
+    if (user.is_deleted) {
+      console.log(`[DEBUG] Login failed: User ${user.user_id} is deleted.`);
+      throw new Error("Account not found");
+    }
 
     if (user.is_banned) {
       console.log(`[DEBUG] Login failed: User ${user.user_id} is banned.`);
-      return false;
+      throw new Error("Your account has been banned. Please contact support.");
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       console.log(`[DEBUG] Login failed: Incorrect password for "${email}".`);
-      return false;
+      throw new Error("Invalid credentials");
     }
 
     const role = user.role_id;
@@ -548,7 +555,7 @@ const login = async (email, password) => {
 
   } catch (error) {
     console.error("[DEBUG] Login error during execution:", error);
-    return false;
+    throw error;
   }
 };
 
@@ -591,32 +598,34 @@ const insertParcels = async (orderId, parcels) => {
   }
 };
 
-const createOrder = async (
-  authToken,
-  sender_name,
-  sender_phone,
-  sender_address,
-  sender_state,
-  sender_city,
-  sender_pincode,
-  receiver_name,
-  receiver_phone,
-  receiver_address,
-  receiver_state,
-  receiver_city,
-  receiver_pincode,
-  special_instruction,
-  order_amount,
-  parcels,
-  urgency,
-  fare_breakdown,
-  sender_lat,
-  sender_lng,
-  receiver_lat,
-  receiver_lng,
-  payment_method
-) => {
+const createOrder = async (authToken, options) => {
+  const {
+    sender_name,
+    sender_phone,
+    sender_address,
+    sender_state,
+    sender_city,
+    sender_pincode,
+    receiver_name,
+    receiver_phone,
+    receiver_address,
+    receiver_state,
+    receiver_city,
+    receiver_pincode,
+    special_instruction,
+    order_amount,
+    parcels,
+    urgency,
+    fare_breakdown,
+    sender_lat,
+    sender_lng,
+    receiver_lat,
+    receiver_lng,
+    payment_method
+  } = options;
+
   try {
+    console.log(`[userService] createOrder called. Method: ${payment_method}`);
     //Extract token data
     const extractedData = extractJwtTokenData(authToken);
     const userId = extractedData?.userId;
@@ -665,17 +674,22 @@ const createOrder = async (
       receiver_state,
       receiver_city,
       receiver_pincode,
-      special_instruction,
-      Math.round(Number(order_amount) || 0),
-      false,
-      urgency,
-      fare_breakdown ? JSON.stringify(fare_breakdown) : null,
-      sender_lat ?? null,
-      sender_lng ?? null,
-      receiver_lat ?? null,
-      receiver_lng ?? null,
-      payment_method || 'cash'
+      special_instruction, // $16
+      Math.round(Number(order_amount) || 0), // $17
+      false, // $18 (is_complete)
+      urgency, // $19
+      fare_breakdown ? JSON.stringify(fare_breakdown) : null, // $20
+      sender_lat ?? null, // $21
+      sender_lng ?? null, // $22
+      receiver_lat ?? null, // $23
+      receiver_lng ?? null, // $24
+      payment_method || 'cash' // $25 (Placeholder index 25)
     ];
+
+    console.log('[userService] SQL Values Mapping:');
+    orderValues.forEach((val, idx) => {
+        console.log(`  $${idx + 1}: ${val}`);
+    });
 
     const orderResult = await pool.query(orderQuery, orderValues);
 
@@ -749,12 +763,54 @@ const updateUserLocation = async (userId, lat, lng) => {
   }
 };
 
+const toggleUserBan = async (userId, isBanned) => {
+    try {
+        const query = `UPDATE users SET is_banned = $1 WHERE user_id = $2`;
+        const result = await pool.query(query, [isBanned, userId]);
+        return result.rowCount > 0;
+    } catch (err) {
+        console.error("Error toggling user ban:", err);
+        throw err;
+    }
+};
+
+const deleteUser = async (userId) => {
+    try {
+        const query = `UPDATE users SET is_deleted = true, is_banned = true WHERE user_id = $1`;
+        const result = await pool.query(query, [userId]);
+        return result.rowCount > 0;
+    } catch (err) {
+        console.error("Error soft deleting user:", err);
+        throw err;
+    }
+};
+
+const adminCreateUser = async (data) => {
+    try {
+        const { first_name, last_name, email, phone, password, role_id } = data;
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const userId = await generateId(role_id === 9 ? 30 : 10); 
+        
+        const query = `
+            INSERT INTO users (user_id, first_name, last_name, email, phone, password, role_id, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+            RETURNING user_id, email, role_id
+        `;
+        const result = await pool.query(query, [userId, first_name, last_name, email, phone, hashedPassword, role_id]);
+        return result.rows[0];
+    } catch (err) {
+        console.error("Error admin creating user:", err);
+        throw err;
+    }
+};
+
 const getAllUsers = async () => {
   try {
     const query = `
       SELECT u.user_id, u.first_name, u.last_name, u.email, u.phone, u.is_banned, u.created_at, r.role_name, u.role_id, u.current_lat, u.current_lng
       FROM users u
       LEFT JOIN roles_master r ON u.role_id = r.role_id
+      WHERE u.is_deleted = false
       ORDER BY u.created_at DESC
     `;
     const result = await pool.query(query);
@@ -777,7 +833,10 @@ const getAllDeliveryPartners = async () => {
              vm1.value_name AS document_type,
              vm2.value_name AS vehicle_type,
              vm3.value_name AS working_type,
-             vm4.value_name AS account_status
+             vm4.value_name AS account_status,
+             (SELECT COUNT(*) FROM orders WHERE delivery_partner_id = u.user_id AND is_complete = true) as total_deliveries,
+             (SELECT COALESCE(SUM(dp_share), 0) FROM delivery_partner_payout_orders WHERE delivery_partner_id = u.user_id) as lifetime_earnings,
+             (SELECT COALESCE(SUM(dp_share), 0) FROM delivery_partner_payout_orders WHERE delivery_partner_id = u.user_id AND status != 'paid') as unsettled_amount
       FROM users u
       LEFT JOIN delivery_partner dp ON u.user_id = dp.delivery_partner_id
       LEFT JOIN roles_master r ON u.role_id = r.role_id
@@ -785,7 +844,7 @@ const getAllDeliveryPartners = async () => {
       LEFT JOIN value_master vm2 ON dp.vehicle_type_id = vm2.value_id
       LEFT JOIN value_master vm3 ON dp.working_type_id = vm3.value_id
       LEFT JOIN value_master vm4 ON dp.account_status_id = vm4.value_id
-      WHERE u.role_id = 9
+      WHERE u.role_id = 9 AND u.is_deleted = false
       ORDER BY u.created_at DESC
     `;
     const result = await pool.query(query);
@@ -818,7 +877,7 @@ const verifyDeliveryPartner = async (partnerId) => {
 const getPendingOrders = async () => {
   try {
     const result = await pool.query(`
-      SELECT o.*
+      SELECT o.*, (o.order_amount * 0.8) as dp_share
       FROM orders o
       WHERE o.delivery_status_id = (SELECT value_id FROM value_master WHERE value_name = 'Order Placed')
         AND o.delivery_partner_id IS NULL
@@ -855,7 +914,7 @@ const acceptOrder = async (orderId, dpId) => {
 const getDPActiveOrder = async (dpId) => {
   try {
     const result = await pool.query(`
-      SELECT o.*
+      SELECT o.*, (o.order_amount * 0.8) as dp_share
       FROM orders o
       WHERE o.delivery_partner_id = $1
         AND o.is_complete = false
@@ -871,9 +930,12 @@ const getDPActiveOrder = async (dpId) => {
 
 /** Update delivery status for an order (and mark complete if Delivered) */
 const updateOrderStatus = async (orderId, dpId, statusName) => {
+  const client = await pool.connect();
   try {
+    await client.query('BEGIN');
+    
     const isComplete = statusName === 'Delivered';
-    const result = await pool.query(`
+    const result = await client.query(`
       UPDATE orders
       SET delivery_status_id = (SELECT value_id FROM value_master WHERE value_name = $1),
           is_complete = $2
@@ -883,28 +945,39 @@ const updateOrderStatus = async (orderId, dpId, statusName) => {
 
     if (result.rowCount > 0) {
       // Log the change for tracking
-      await pool.query(`
+      await client.query(`
         INSERT INTO order_status_history (order_id, delivery_status_id, updating_partner_id, updated_at)
         VALUES ($1, (SELECT value_id FROM value_master WHERE value_name = $2), $3, NOW())
       `, [orderId, statusName, dpId]);
 
-      // Auto-create payout record when order is delivered
-      if (isComplete) {
-        await createPayoutForOrder(result.rows[0]);
+      // Auto-create payout record when cash is collected at pickup (or when delivered for online)
+      const order = result.rows[0];
+      console.log(`[userService] updateOrderStatus: Order ${orderId} is "${order.payment_method}"`);
+      const isCash = (order.payment_method || 'cash') === 'cash';
+      
+      if ((isCash && statusName === 'Picked Up') || isComplete) {
+        await createPayoutForOrder(order, client);
       }
     }
 
+    await client.query('COMMIT');
     return result.rows[0] ?? null;
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Error updating order status:', error);
     return null;
+  } finally {
+    client.release();
   }
 };
 
 const adminUpdateOrderStatus = async (orderId, statusName) => {
+  const client = await pool.connect();
   try {
+    await client.query('BEGIN');
+    
     const isComplete = statusName === 'Delivered';
-    const result = await pool.query(`
+    const result = await client.query(`
       UPDATE orders
       SET delivery_status_id = (SELECT value_id FROM value_master WHERE value_name = $1),
           is_complete = $2
@@ -913,21 +986,26 @@ const adminUpdateOrderStatus = async (orderId, statusName) => {
     `, [statusName, isComplete, orderId]);
 
     if (result.rowCount > 0) {
-      await pool.query(`
+      await client.query(`
         INSERT INTO order_status_history (order_id, delivery_status_id, updating_partner_id, updated_at)
         VALUES ($1, (SELECT value_id FROM value_master WHERE value_name = $2), NULL, NOW())
       `, [orderId, statusName]);
 
-      // Auto-create payout record when order is delivered
-      if (isComplete) {
-        await createPayoutForOrder(result.rows[0]);
+      // Auto-create payout record when cash is collected at pickup (or when delivered for online)
+      const isCash = (result.rows[0].payment_method || 'cash') === 'cash';
+      if ((isCash && statusName === 'Picked Up') || isComplete) {
+        await createPayoutForOrder(result.rows[0], client);
       }
     }
 
+    await client.query('COMMIT');
     return result.rows[0] ?? null;
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Error in adminUpdateOrderStatus:', error);
     return null;
+  } finally {
+    client.release();
   }
 };
 
@@ -936,8 +1014,10 @@ const adminUpdateOrderStatus = async (orderId, statusName) => {
 const DP_SHARE_PERCENT = 0.80;
 const ADMIN_SHARE_PERCENT = 0.20;
 
-/** Auto-create a payout record when an order is delivered */
-const createPayoutForOrder = async (order) => {
+/** Auto-create a payout record when an order is delivered.
+ * Optional 'client' parameter for transaction support.
+ */
+const createPayoutForOrder = async (order, client = pool) => {
   try {
     if (!order.delivery_partner_id) {
       console.warn(`Cannot create payout for order ${order.order_id}: no delivery partner assigned`);
@@ -945,7 +1025,7 @@ const createPayoutForOrder = async (order) => {
     }
 
     // Check if payout already exists for this order
-    const existingPayout = await pool.query(
+    const existingPayout = await client.query(
       `SELECT payout_order_id FROM delivery_partner_payout_orders WHERE order_id = $1`,
       [order.order_id]
     );
@@ -957,23 +1037,31 @@ const createPayoutForOrder = async (order) => {
     const orderAmount = Number(order.order_amount) || 0;
     const dpShare = Math.round(orderAmount * DP_SHARE_PERCENT * 100) / 100;
     const adminShare = Math.round(orderAmount * ADMIN_SHARE_PERCENT * 100) / 100;
-    const paymentMethod = order.payment_method || 'cash';
+    
+    // EXPLICIT LOGGING to catch why 'online' becomes 'cash'
+    const paymentMethod = String(order.payment_method || 'cash').trim().toLowerCase();
     const isCash = paymentMethod === 'cash';
+
+    console.log(`[userService] createPayoutForOrder: Order ${order.order_id} method is "${paymentMethod}", isCash=${isCash}`);
 
     // For cash orders: DP collected cash, so status = 'cash_pending' (DP must deposit cash first)
     // For online orders: Admin already has money, status = 'awaiting_payout' (Admin can pay DP directly)
     const status = isCash ? 'cash_pending' : 'awaiting_payout';
 
-    const result = await pool.query(`
+    const payoutOrderId = await generateId(60);
+
+    const result = await client.query(`
       INSERT INTO delivery_partner_payout_orders 
-        (order_id, delivery_partner_id, order_amount, dp_share, admin_share, 
+        (payout_order_id, order_id, delivery_partner_id, order_amount, amount, dp_share, admin_share, 
          payment_method, cash_collected, status, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
       RETURNING *
     `, [
+      payoutOrderId,
       order.order_id,
       order.delivery_partner_id,
       orderAmount,
+      dpShare,
       dpShare,
       adminShare,
       paymentMethod,
@@ -985,6 +1073,8 @@ const createPayoutForOrder = async (order) => {
     return result.rows[0];
   } catch (error) {
     console.error('Error creating payout for order:', error);
+    // Re-throw if in transaction so the caller can rollback
+    if (client !== pool) throw error;
     return null;
   }
 };
@@ -1243,12 +1333,18 @@ const getCustomerOrders = async (userId) => {
     }
 };
 
-const getDeliveryPartnerOrders = async (dpId) => {
+const getDeliveryPartnerOrders = async (dpId, timeframe = 'all') => {
     try {
+        let dateFilter = '';
+        if (timeframe === '7d') dateFilter = "AND o.created_at >= CURRENT_DATE - INTERVAL '7 days'";
+        else if (timeframe === '1m') dateFilter = "AND o.created_at >= CURRENT_DATE - INTERVAL '30 days'";
+        else if (timeframe === '1y') dateFilter = "AND o.created_at >= CURRENT_DATE - INTERVAL '1 year'";
+
         const query = `
             SELECT 
                 o.*,
                 vs.value_name as status_name,
+                payout.dp_share,
                 (
                     SELECT json_agg(json_build_object(
                         'parcel_type', pt.value_name,
@@ -1261,7 +1357,8 @@ const getDeliveryPartnerOrders = async (dpId) => {
                 ) as parcels
             FROM orders o
             LEFT JOIN value_master vs ON o.delivery_status_id = vs.value_id
-            WHERE o.delivery_partner_id = $1
+            LEFT JOIN delivery_partner_payout_orders payout ON o.order_id = payout.order_id
+            WHERE o.delivery_partner_id = $1 ${dateFilter}
             ORDER BY o.created_at DESC
         `;
         const res = await pool.query(query, [dpId]);
@@ -1298,8 +1395,13 @@ const getAllBusinesses = async () => {
     }
 };
 
-const getDashboardStats = async () => {
+const getDashboardStats = async (timeframe = 'all') => {
     try {
+        let dateFilter = '';
+        if (timeframe === '7d') dateFilter = "AND created_at >= CURRENT_DATE - INTERVAL '7 days'";
+        else if (timeframe === '1m') dateFilter = "AND created_at >= CURRENT_DATE - INTERVAL '30 days'";
+        else if (timeframe === '1y') dateFilter = "AND created_at >= CURRENT_DATE - INTERVAL '1 year'";
+
         const statsQuery = `
             SELECT 
                 (SELECT COUNT(*) FROM users) as total_users,
@@ -1308,60 +1410,51 @@ const getDashboardStats = async () => {
                 (SELECT COUNT(*) FROM users u JOIN roles_master r ON u.role_id = r.role_id WHERE r.role_name IN ('Delivery Partner', 'Rider') OR u.role_id = 9) as total_delivery_partners,
                 (SELECT COUNT(*) FROM delivery_partner WHERE is_verified = true) as active_delivery_partners,
                 (SELECT COUNT(*) FROM delivery_partner WHERE is_verified = false) as pending_verifications,
-                (SELECT COUNT(*) FROM users WHERE is_banned = true) as blocked_accounts,
-                (SELECT COUNT(*) FROM orders) as total_orders,
+                (SELECT COUNT(*) FROM users WHERE is_banned = true) as banned_accounts,
+                (SELECT COUNT(*) FROM orders WHERE 1=1 ${dateFilter}) as total_orders,
                 (SELECT COUNT(*) FROM orders WHERE created_at >= CURRENT_DATE) as orders_today,
-                (SELECT COUNT(*) FROM orders o JOIN value_master v ON o.delivery_status_id = v.value_id WHERE v.value_name IN ('Picked Up', 'In Transit', 'Assigned')) as orders_in_transit,
-                (SELECT COUNT(*) FROM orders o JOIN value_master v ON o.delivery_status_id = v.value_id WHERE v.value_name = 'Delivered') as delivered_orders,
-                (SELECT SUM(order_amount) FROM orders) as total_revenue
+                (SELECT COUNT(*) FROM orders o JOIN value_master v ON o.delivery_status_id = v.value_id WHERE v.value_name IN ('Picked Up', 'In Transit', 'Assigned') ${dateFilter}) as orders_in_transit,
+                (SELECT COUNT(*) FROM orders o JOIN value_master v ON o.delivery_status_id = v.value_id WHERE v.value_name = 'Delivered' ${dateFilter}) as delivered_orders,
+                (SELECT COALESCE(SUM(order_amount), 0) FROM orders WHERE 1=1 ${dateFilter}) as total_revenue
+            FROM (SELECT 1) dummy
         `;
-        const statsResult = await pool.query(statsQuery);
         
-        // Fetch revenue trend for last 7 days
-        const revenueTrendQuery = `
+        const revenueQuery = `
             SELECT 
-                TO_CHAR(date_series, 'Dy') as name,
-                COALESCE(SUM(o.order_amount), 0) as revenue
-            FROM 
-                generate_series(CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, '1 day') AS date_series
-            LEFT JOIN 
-                orders o ON DATE(o.created_at) = DATE(date_series)
-            GROUP BY 
-                date_series
-            ORDER BY 
-                date_series
+                DATE(created_at) as date,
+                SUM(order_amount) as amount
+            FROM orders
+            WHERE 1=1 ${dateFilter}
+            GROUP BY DATE(created_at)
+            ORDER BY DATE(created_at) ASC
         `;
-        const revenueTrendResult = await pool.query(revenueTrendQuery);
 
-        // Fetch order trend for last 7 days
         const orderTrendQuery = `
             SELECT 
-                TO_CHAR(date_series, 'Dy') as name,
-                COUNT(o.order_id) as total,
-                COUNT(CASE WHEN vs.value_name = 'Delivered' THEN 1 END) as delivered
-            FROM 
-                generate_series(CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE, '1 day') AS date_series
-            LEFT JOIN 
-                orders o ON DATE(o.created_at) = DATE(date_series)
-            LEFT JOIN 
-                value_master vs ON o.delivery_status_id = vs.value_id
-            GROUP BY 
-                date_series
-            ORDER BY 
-                date_series
+                DATE(created_at) as date,
+                COUNT(*) as total,
+                COUNT(*) FILTER (WHERE delivery_status_id = (SELECT value_id FROM value_master WHERE value_name = 'Delivered')) as delivered
+            FROM orders
+            WHERE 1=1 ${dateFilter}
+            GROUP BY DATE(created_at)
+            ORDER BY DATE(created_at) ASC
         `;
-        const orderTrendResult = await pool.query(orderTrendQuery);
+
+        const stats = await pool.query(statsQuery);
+        const revenue = await pool.query(revenueQuery);
+        const orderTrend = await pool.query(orderTrendQuery);
 
         return {
-            ...statsResult.rows[0],
-            revenueTrend: revenueTrendResult.rows,
-            orderTrend: orderTrendResult.rows
+            ...stats.rows[0],
+            revenueTrend: revenue.rows.map(r => ({ name: new Date(r.date).toLocaleDateString('en-US', { weekday: 'short' }), revenue: parseFloat(r.amount) })),
+            orderTrend: orderTrend.rows.map(o => ({ name: new Date(o.date).toLocaleDateString('en-US', { weekday: 'short' }), total: parseInt(o.total), delivered: parseInt(o.delivered) }))
         };
     } catch (err) {
         console.error("Error fetching dashboard stats:", err);
         throw err;
     }
 };
+
 
 const getAllParcels = async () => {
     try {
@@ -1420,6 +1513,31 @@ const getAllPayouts = async () => {
     }
 };
 
+const getPayoutsByPartner = async () => {
+    try {
+        const query = `
+            SELECT 
+                p.delivery_partner_id,
+                dp.first_name, dp.last_name, dp.phone, dp.email,
+                COUNT(*) FILTER (WHERE p.status = 'cash_pending') as cash_pending_count,
+                COUNT(*) FILTER (WHERE p.status = 'awaiting_payout') as awaiting_payout_count,
+                COALESCE(SUM(order_amount) FILTER (WHERE p.status = 'cash_pending'), 0) as total_cash_to_collect,
+                COALESCE(SUM(dp_share) FILTER (WHERE p.status = 'awaiting_payout'), 0) as total_ready_to_pay,
+                COALESCE(SUM(dp_share) FILTER (WHERE p.status = 'cash_pending'), 0) as dp_share_in_cash,
+                COALESCE(SUM(admin_share) FILTER (WHERE p.status = 'cash_pending'), 0) as company_share_in_cash
+            FROM delivery_partner_payout_orders p
+            LEFT JOIN users dp ON p.delivery_partner_id = dp.user_id
+            WHERE p.status != 'paid'
+            GROUP BY p.delivery_partner_id, dp.first_name, dp.last_name, dp.phone, dp.email
+        `;
+        const { rows } = await pool.query(query);
+        return rows;
+    } catch (err) {
+        throw err;
+    }
+};
+
+
 const getPayoutStats = async () => {
     try {
         const query = `
@@ -1427,6 +1545,9 @@ const getPayoutStats = async () => {
                 COUNT(*) FILTER (WHERE status = 'cash_pending') as cash_pending_count,
                 COUNT(*) FILTER (WHERE status = 'awaiting_payout') as awaiting_payout_count,
                 COUNT(*) FILTER (WHERE status = 'paid') as paid_count,
+                COALESCE(SUM(order_amount) FILTER (WHERE payment_method = 'cash' AND status != 'paid'), 0) as total_cash_held,
+                COALESCE(SUM(order_amount) FILTER (WHERE payment_method != 'cash' AND status != 'paid'), 0) as total_online_held,
+                COALESCE(SUM(order_amount) FILTER (WHERE status != 'paid'), 0) as grand_total_pending,
                 COALESCE(SUM(dp_share) FILTER (WHERE status = 'awaiting_payout'), 0) as total_awaiting,
                 COALESCE(SUM(dp_share) FILTER (WHERE status = 'cash_pending'), 0) as total_cash_pending,
                 COALESCE(SUM(dp_share) FILTER (WHERE status = 'paid'), 0) as total_paid_out,
@@ -1438,6 +1559,56 @@ const getPayoutStats = async () => {
     } catch (err) {
         throw err;
     }
+};
+
+const confirmPartnerCash = async (partnerId) => {
+    try {
+        const query = `
+            UPDATE delivery_partner_payout_orders
+            SET cash_deposited = true, cash_deposit_confirmed = true,
+                status = 'awaiting_payout', is_paid = false, confirmed_at = NOW()
+            WHERE delivery_partner_id = $1 AND status = 'cash_pending'
+            RETURNING *
+        `;
+        const { rows } = await pool.query(query, [partnerId]);
+        return rows;
+    } catch (err) {
+        throw err;
+    }
+};
+
+const processPartnerBulkPayout = async (partnerId, transactionId, notes) => {
+    try {
+        console.log(`[SERVICE] Settle bulk payout for DP ${partnerId} with Txn ${transactionId}`);
+        const query = `
+            UPDATE delivery_partner_payout_orders
+            SET status = 'paid', is_paid = true, partner_transaction_id = $2, notes = $3, paid_at = NOW()
+            WHERE delivery_partner_id = $1 AND status = 'awaiting_payout'
+            RETURNING *
+        `;
+        const { rows } = await pool.query(query, [partnerId, transactionId, notes]);
+        console.log(`[SERVICE] Query complete. Rows affected: ${rows.length}`);
+        return rows;
+    } catch (err) {
+        console.error('[SERVICE ERROR] Bulk Payout Failed:', err);
+        throw err;
+    }
+};
+
+const createComplaint = async (orderId, userId, complaintTypeId, description) => {
+  try {
+    const complaintId = await generateId(80);
+    const query = `
+      INSERT INTO complaints (complaint_id, order_id, user_id, complaint_type_id, complaint_status_id, description, created_at)
+      VALUES ($1, $2, $3, $4, (SELECT value_id FROM value_master WHERE value_name = 'In Progress'), $5, NOW())
+      RETURNING *
+    `;
+    const result = await pool.query(query, [complaintId, orderId, userId, complaintTypeId, description]);
+    return result.rows[0];
+  } catch (err) {
+    console.error("Error creating complaint:", err);
+    return false;
+  }
 };
 
 const getAllComplaints = async () => {
@@ -1457,6 +1628,24 @@ const getAllComplaints = async () => {
         throw err;
     }
 };
+
+const getMyComplaints = async (userId) => {
+    try {
+        const query = `
+            SELECT c.*, ct.value_name as complaint_type_name, cs.value_name as complaint_status_name
+            FROM complaints c
+            LEFT JOIN value_master ct ON c.complaint_type_id = ct.value_id
+            LEFT JOIN value_master cs ON c.complaint_status_id = cs.value_id
+            WHERE c.user_id = $1
+            ORDER BY c.created_at DESC
+        `;
+        const { rows } = await pool.query(query, [userId]);
+        return rows;
+    } catch (err) {
+        throw err;
+    }
+};
+
 
 const getAllBilling = async () => {
     try {
@@ -1486,6 +1675,68 @@ const getAllRoles = async () => {
     }
 };
 
+const createMasterCategory = async (type_name) => {
+    try {
+        const query = `INSERT INTO main_master (type_name) VALUES ($1) RETURNING *`;
+        const result = await pool.query(query, [type_name]);
+        return result.rows[0];
+    } catch (err) {
+        console.error("Error creating master category:", err);
+        throw err;
+    }
+};
+
+const createMasterValue = async (master_id, value_name) => {
+    try {
+        const query = `INSERT INTO value_master (master_id, value_name) VALUES ($1, $2) RETURNING *`;
+        const result = await pool.query(query, [master_id, value_name]);
+        return result.rows[0];
+    } catch (err) {
+        console.error("Error creating master value:", err);
+        throw err;
+    }
+};
+
+const resolveComplaint = async (id, admin_note) => {
+    try {
+        // Find 'Resolved' status ID
+        const statusQuery = `SELECT value_id FROM value_master WHERE value_name = 'Resolved' LIMIT 1`;
+        const statusRes = await pool.query(statusQuery);
+        const resolvedId = statusRes.rows[0]?.value_id;
+        
+        const query = `UPDATE complaints SET complaint_status_id = $1, admin_note = $2 WHERE complaint_id = $3`;
+        const result = await pool.query(query, [resolvedId, admin_note, id]);
+        return result.rowCount > 0;
+    } catch (err) {
+        console.error("Error resolving complaint:", err);
+        throw err;
+    }
+};
+
+const generateBilling = async () => {
+    try {
+        // Mock implementation: find orders for business clients that aren't billed yet
+        // In reality, this would be a complex batch process
+        const statusQuery = `SELECT value_id FROM value_master WHERE value_name = 'Pending' LIMIT 1`;
+        const statusRes = await pool.query(statusQuery);
+        const pendingStatusId = statusRes.rows[0]?.value_id;
+
+        const query = `
+            INSERT INTO business_billing_accounts (business_id, billing_status_id, amount, generated_at)
+            SELECT business_id, $1, SUM(order_amount), NOW()
+            FROM orders
+            WHERE business_id IS NOT NULL AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+            GROUP BY business_id
+            RETURNING *
+        `;
+        const result = await pool.query(query, [pendingStatusId]);
+        return result.rowCount;
+    } catch (err) {
+        console.error("Error generating billing:", err);
+        throw err;
+    }
+};
+
 const getAllMasterData = async () => {
     try {
         const query = `
@@ -1501,6 +1752,41 @@ const getAllMasterData = async () => {
     }
 };
 
+
+const getDeliveryPartnerWalletDetails = async (dpId, timeframe = 'all') => {
+    try {
+        let dateFilter = '';
+        if (timeframe === '7d') dateFilter = "AND created_at >= CURRENT_DATE - INTERVAL '7 days'";
+        else if (timeframe === '1m') dateFilter = "AND created_at >= CURRENT_DATE - INTERVAL '30 days'";
+        else if (timeframe === '1y') dateFilter = "AND created_at >= CURRENT_DATE - INTERVAL '1 year'";
+
+        const query = `
+            SELECT 
+                COALESCE(SUM(CASE WHEN status = 'cash_pending' THEN cash_collected ELSE 0 END), 0) as cash_in_hand,
+                COALESCE(SUM(CASE WHEN status = 'awaiting_payout' THEN dp_share ELSE 0 END), 0) as unpaid_online_earnings,
+                COALESCE(SUM(CASE WHEN status = 'paid' THEN dp_share ELSE 0 END), 0) as lifetime_earnings
+            FROM delivery_partner_payout_orders
+            WHERE delivery_partner_id = $1 ${dateFilter}
+        `;
+        const { rows } = await pool.query(query, [dpId]);
+        
+        const historyQuery = `
+            SELECT payout_order_id, order_id, order_amount, dp_share, payment_method, status, cash_collected, created_at, paid_at
+            FROM delivery_partner_payout_orders
+            WHERE delivery_partner_id = $1 ${dateFilter}
+            ORDER BY created_at DESC
+        `;
+        const historyRes = await pool.query(historyQuery, [dpId]);
+        
+        return {
+            stats: rows[0],
+            history: historyRes.rows
+        };
+    } catch (error) {
+        console.error("Error fetching DP wallet details:", error);
+        throw error;
+    }
+};
 
 module.exports = { 
     registerCustomer, 
@@ -1531,11 +1817,23 @@ module.exports = {
     getAllPayments,
     getAllPayouts,
     getPayoutStats,
+    createComplaint,
     getAllComplaints,
+    getMyComplaints,
     getAllBilling,
     getAllRoles,
     getAllMasterData,
+    toggleUserBan,
+    deleteUser,
+    adminCreateUser,
+    createMasterCategory,
+    createMasterValue,
+    resolveComplaint,
+    generateBilling,
     confirmCashDeposit,
-    processPayoutToDp
+    processPayoutToDp,
+    getPayoutsByPartner,
+    confirmPartnerCash,
+    processPartnerBulkPayout,
+    getDeliveryPartnerWalletDetails
 };
-

@@ -53,7 +53,7 @@ const Orders = () => {
 
     useEffect(() => {
         fetchOrders(true);
-        const interval = setInterval(() => fetchOrders(false), 5000);
+        const interval = setInterval(() => fetchOrders(false), 2000);
         return () => clearInterval(interval);
     }, []);
 
@@ -123,6 +123,9 @@ const Orders = () => {
                                 <h4 style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>Delivery Information</h4>
                                 <div className="info-row"><span className="info-label">Assigned Rider</span><span className="info-value">{order.dp_first_name ? `${order.dp_first_name} ${order.dp_last_name || ''}` : 'Not Assigned'}</span></div>
                                 <div className="info-row"><span className="info-label">Vehicle</span><span className="info-value">{order.vehicle_name || 'Not Available'}</span></div>
+                                <div className="info-row"><span className="info-label">Payment Mode</span><span className="info-value" style={{ fontWeight: '600', color: order.payment_method === 'online' ? 'var(--accent-primary)' : 'var(--accent-warning)' }}>
+                                    {order.payment_method === 'online' ? 'Online' : 'Offline/Cash'}
+                                </span></div>
                                 <div className="info-row"><span className="info-label">Amount</span><span className="info-value">₹{order.order_amount || '0'}</span></div>
                                 <div className="info-row"><span className="info-label">Distance</span><span className="info-value">{order.distance_km ? order.distance_km + ' km' : 'N/A'}</span></div>
                             </div>
@@ -243,6 +246,7 @@ const Orders = () => {
                                 <th>Receiver</th>
                                 <th>Route</th>
                                 <th>Parcel</th>
+                                <th>Payment</th>
                                 <th>Amount</th>
                                 <th>Status</th>
                                 <th>Date</th>
@@ -286,8 +290,20 @@ const Orders = () => {
                                                 </div>
                                             </td>
                                             <td>
-                                                <div style={{ fontSize: '0.85rem', fontWeight: '500' }}>{parcelInfo?.parcel_type || 'N/A'}</div>
-                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{parcelInfo?.parcel_size || 'N/A'}</div>
+                                                <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--accent-primary)' }}>
+                                                    {parcelInfo?.parcel_size || 'N/A'}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {order.payment_method === 'online' ? (
+                                                    <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', background: '#e0f2fe', color: '#0369a1', borderRadius: '4px', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                                                        Online
+                                                    </span>
+                                                ) : (
+                                                    <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', background: '#fef3c7', color: '#b45309', borderRadius: '4px', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                                                        Offline
+                                                    </span>
+                                                )}
                                             </td>
                                             <td><span style={{ fontWeight: '600' }}>₹{order.order_amount ? Number(order.order_amount).toFixed(0) : '0'}</span></td>
                                             <td>{getStatusBadge(order.status_name)}</td>

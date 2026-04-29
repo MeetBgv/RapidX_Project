@@ -48,10 +48,10 @@ class _ParcelOrderPageState extends State<ParcelOrderPage> {
 
   // Parcel Sizes
   final List<DropdownItem> _parcelSizes = [
-    DropdownItem("Small (Shoebox size)", Icons.inbox),
-    DropdownItem("Medium (Microwave size)", Icons.kitchen),
-    DropdownItem("Large (Suitcase size)", Icons.luggage),
-    DropdownItem("Extra Large", Icons.inventory),
+    DropdownItem("Small", Icons.inbox),
+    DropdownItem("Medium", Icons.kitchen),
+    DropdownItem("Large", Icons.luggage),
+    DropdownItem("Very Large", Icons.inventory),
   ];
 
   // Urgency Levels
@@ -408,7 +408,7 @@ class _ParcelOrderPageState extends State<ParcelOrderPage> {
                 style: GoogleFonts.baloo2(
                   fontSize: 14.sp,
                   color: Colors.grey.shade600,
-                  height: 1.4,
+                  height: 1.4.h,
                 ),
               ),
               SizedBox(height: 8.h),
@@ -511,7 +511,7 @@ class _ParcelOrderPageState extends State<ParcelOrderPage> {
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
+                blurRadius: 10.r,
                 offset: const Offset(0, -5),
               ),
             ],
@@ -748,8 +748,8 @@ class _ParcelOrderPageState extends State<ParcelOrderPage> {
                         if (_isFetchingLocation)
                           Positioned(
                             right: 12.w,
-                            top: 0,
-                            bottom: 0,
+                            top: 0.h,
+                            bottom: 0.h,
                             child: Center(
                               child: SizedBox(
                                 width: 18.w,
@@ -922,7 +922,7 @@ class _ParcelOrderPageState extends State<ParcelOrderPage> {
                       controller: _weightController,
                       hint: "Weight (in kg)",
                       icon: Icons.monitor_weight_outlined,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
                     ),
                     SizedBox(height: 12.h),
                     _buildDropdown(
@@ -976,14 +976,14 @@ class _ParcelOrderPageState extends State<ParcelOrderPage> {
                       borderRadius: BorderRadius.circular(12.r),
                       borderSide: BorderSide(
                         color: Colors.grey.shade200,
-                        width: 1.5,
+                        width: 1.5.w,
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
-                      borderSide: const BorderSide(
+                      borderSide: BorderSide(
                         color: Color(0xff56A3A6),
-                        width: 1.5,
+                        width: 1.5.w,
                       ),
                     ),
                     filled: true,
@@ -1014,7 +1014,7 @@ class _ParcelOrderPageState extends State<ParcelOrderPage> {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
+            blurRadius: 10.r,
             offset: const Offset(0, 4),
           ),
         ],
@@ -1054,7 +1054,7 @@ class _ParcelOrderPageState extends State<ParcelOrderPage> {
       decoration: BoxDecoration(
         color: const Color(0xffF8f9fa),
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: Colors.grey.shade200, width: 1.5),
+        border: Border.all(color: Colors.grey.shade200, width: 1.5.w),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -1134,11 +1134,11 @@ class _ParcelOrderPageState extends State<ParcelOrderPage> {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: BorderSide(color: Colors.grey.shade200, width: 1.5),
+          borderSide: BorderSide(color: Colors.grey.shade200, width: 1.5.w),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
-          borderSide: const BorderSide(color: Color(0xff56A3A6), width: 1.5),
+          borderSide: BorderSide(color: Color(0xff56A3A6), width: 1.5.w),
         ),
         filled: true,
         fillColor: const Color(0xffF8f9fa),

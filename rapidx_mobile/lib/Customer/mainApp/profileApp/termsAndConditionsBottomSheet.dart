@@ -66,7 +66,7 @@ class TermsBottomSheet extends StatelessWidget {
 
                 InkWell(
                   onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.close, size: 26),
+                  child: Icon(Icons.close, size: 26.sp),
                 ),
               ],
             ),
@@ -173,7 +173,7 @@ class TermsBottomSheet extends StatelessWidget {
             style: GoogleFonts.baloo2(
               fontSize: 13.sp,
               color: Colors.grey.shade700,
-              height: 1.4,
+              height: 1.4.h,
             ),
           ),
         ],

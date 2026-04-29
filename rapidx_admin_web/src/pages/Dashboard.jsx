@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Users, Briefcase, Truck, Package, CheckCircle, Clock,
-    XOctagon, DollarSign, TrendingUp, AlertTriangle, ShieldAlert, RefreshCw
+    XOctagon, IndianRupee, TrendingUp, AlertTriangle, ShieldAlert, RefreshCw
 } from 'lucide-react';
 import {
     AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -30,10 +30,12 @@ const StatCard = ({ title, value, icon, color, trend, trendDown = false }) => (
 const Dashboard = () => {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [timeframe, setTimeframe] = useState('7d');
 
     const fetchStats = async () => {
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/dashboard-stats`);
+            const url = `${import.meta.env.VITE_API_BASE_URL}/api/users/dashboard-stats?timeframe=${timeframe}`;
+            const response = await fetch(url);
             if (response.ok) {
                 const data = await response.json();
                 setStats(data);
@@ -50,7 +52,7 @@ const Dashboard = () => {
         // Refresh stats every minute
         const interval = setInterval(fetchStats, 60000);
         return () => clearInterval(interval);
-    }, []);
+    }, [timeframe]);
 
     if (loading || !stats) {
         return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading dashboard metrics...</div>;
@@ -66,11 +68,33 @@ const Dashboard = () => {
             <div className="page-header">
                 <div>
                     <h1 className="page-title">Dashboard Overview</h1>
-                    <p className="page-subtitle">Welcome back, here's what's happening today.</p>
+                    <p className="page-subtitle">Welcome back, here's what's happening across the platform.</p>
                 </div>
-                <button className="primary-btn" onClick={fetchStats} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <RefreshCw size={16} /> Refresh
-                </button>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                    <div style={{ position: 'relative' }}>
+                        <select 
+                            value={timeframe} 
+                            onChange={(e) => setTimeframe(e.target.value)}
+                            className="primary-btn"
+                            style={{ 
+                                appearance: 'none', 
+                                paddingRight: '2rem',
+                                backgroundColor: 'var(--bg-secondary)',
+                                color: 'var(--text-primary)',
+                                border: '1px solid var(--border-light)'
+                            }}
+                        >
+                            <option value="7d">Last 7 Days</option>
+                            <option value="1m">Last Month</option>
+                            <option value="1y">Last Year</option>
+                            <option value="all">All Time</option>
+                        </select>
+                        <Clock size={14} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-secondary)' }} />
+                    </div>
+                    <button className="primary-btn" onClick={fetchStats} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
+                    </button>
+                </div>
             </div>
 
             <h3 className="panel-title" style={{ marginTop: '2rem' }}>Overview Metrics</h3>
@@ -80,7 +104,7 @@ const Dashboard = () => {
                 <StatCard title="Total Delivery Partners" value={stats.total_delivery_partners} icon={<Truck />} color="green" />
                 <StatCard title="Active Delivery Partners" value={stats.active_delivery_partners} icon={<Truck />} color="green" />
                 <StatCard title="Pending Partner Verifications" value={stats.pending_verifications} icon={<AlertTriangle />} color="warning" />
-                <StatCard title="Blocked Accounts" value={stats.blocked_accounts} icon={<ShieldAlert />} color="danger" />
+                <StatCard title="Banned Accounts" value={stats.banned_accounts} icon={<ShieldAlert />} color="danger" />
             </div>
 
             <div className="grid-2-cols" style={{ marginTop: '2rem' }}>
@@ -140,7 +164,7 @@ const Dashboard = () => {
 
             <h3 className="panel-title" style={{ marginTop: '2rem' }}>Revenue Overview</h3>
             <div className="grid-cards">
-                <StatCard title="Total Platform Revenue" value={`₹${stats.total_revenue || 0}`} icon={<DollarSign />} color="success" />
+                <StatCard title="Total Platform Revenue" value={`₹${stats.total_revenue || 0}`} icon={<IndianRupee />} color="success" />
             </div>
 
             <h3 className="panel-title" style={{ marginTop: '2rem' }}>Revenue Trends (Last 7 Days)</h3>

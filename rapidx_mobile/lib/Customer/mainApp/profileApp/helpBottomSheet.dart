@@ -68,7 +68,7 @@ class HelpSupportBottomSheet extends StatelessWidget {
 
                   InkWell(
                     onTap: () => Navigator.pop(context),
-                    child: const Icon(Icons.close, size: 26),
+                    child: Icon(Icons.close, size: 26.sp),
                   ),
                 ],
               ),
@@ -176,7 +176,7 @@ class HelpSupportBottomSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(10.r),
             ),
 
-            child: Icon(icon, color: const Color(0xff234C6A), size: 22),
+            child: Icon(icon, color: const Color(0xff234C6A), size: 22.sp),
           ),
 
           SizedBox(width: 12.w),

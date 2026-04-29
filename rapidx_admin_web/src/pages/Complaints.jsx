@@ -5,9 +5,10 @@ const Complaints = () => {
     const [complaints, setComplaints] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedComplaint, setSelectedComplaint] = useState(null);
+    const [adminNote, setAdminNote] = useState('');
 
-    const fetchComplaints = async () => {
-        setLoading(true);
+    const fetchComplaints = async (isAuto = false) => {
+        if (!isAuto) setLoading(true);
         try {
             const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/complaints`);
             if (res.ok) {
@@ -17,12 +18,43 @@ const Complaints = () => {
         } catch (error) {
             console.error('Error fetching complaints:', error);
         } finally {
-            setLoading(false);
+            if (!isAuto) setLoading(false);
+        }
+    };
+
+    const handleResolve = async () => {
+        if (!adminNote.trim()) {
+            alert('Please provide resolution notes.');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/users/complaints/${selectedComplaint.complaint_id}/resolve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ admin_note: adminNote })
+            });
+
+            if (res.ok) {
+                alert('Complaint resolved successfully');
+                setSelectedComplaint(null);
+                setAdminNote('');
+                fetchComplaints();
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                alert('Failed to resolve: ' + (errData.error || errData.message || 'Server error'));
+            }
+        } catch (err) {
+            alert('Error resolving complaint: ' + err.message);
         }
     };
 
     useEffect(() => {
         fetchComplaints();
+        const interval = setInterval(() => {
+            fetchComplaints(true);
+        }, 10000); // 10s auto-refresh
+        return () => clearInterval(interval);
     }, []);
 
     if (selectedComplaint) {
@@ -47,26 +79,36 @@ const Complaints = () => {
                         <div className="info-row"><span className="info-label">Complaint Type</span><span className="info-value">{selectedComplaint.complaint_type_name || 'N/A'}</span></div>
                         <div className="info-row"><span className="info-label">Description</span><span className="info-value" style={{ lineHeight: '1.5', marginTop: '4px' }}>{selectedComplaint.description}</span></div>
                         <div className="info-row"><span className="info-label">Created Date</span><span className="info-value">{new Date(selectedComplaint.created_at).toLocaleString()}</span></div>
-                        <div className="info-row"><span className="info-label">Resolved Date</span><span className="info-value" style={{ color: 'var(--text-muted)' }}>{selectedComplaint.resolved_at ? new Date(selectedComplaint.resolved_at).toLocaleString() : 'Not Resolved'}</span></div>
+                        <div className="info-row"><span className="info-label">Status</span><span className="info-value" style={{ color: 'var(--text-muted)' }}>{selectedComplaint.complaint_status_name}</span></div>
+                        {selectedComplaint.admin_note && (
+                            <div className="info-row"><span className="info-label">Admin Resolution Note</span><span className="info-value">{selectedComplaint.admin_note}</span></div>
+                        )}
                     </div>
 
                     <div className="panel">
-                        <h3 className="panel-title">Resolution Log</h3>
-                        <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', borderLeft: '3px solid var(--accent-primary)' }}>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Oct 12, 08:45 PM - Agent: Support01</div>
-                            <div style={{ fontSize: '0.875rem' }}>Contacted delivery partner. He mentioned flat tire on the way. Waiting for update.</div>
-                        </div>
+                        <h3 className="panel-title">Resolution Actions</h3>
+                        {selectedComplaint.complaint_status_name !== 'Resolved' ? (
+                            <>
+                                <div style={{ fontSize: '0.875rem', marginBottom: '8px' }}>Add resolution details below:</div>
+                                <textarea
+                                    className="header-search"
+                                    style={{ width: '100%', height: '120px', resize: 'none', padding: '1rem', background: 'var(--bg-primary)', margin: '0.5rem 0' }}
+                                    placeholder="Enter final resolution steps or why it was closed..."
+                                    value={adminNote}
+                                    onChange={(e) => setAdminNote(e.target.value)}
+                                ></textarea>
 
-                        <textarea
-                            className="header-search"
-                            style={{ width: '100%', height: '100px', resize: 'none', padding: '1rem', background: 'var(--bg-primary)', margin: '1rem 0' }}
-                            placeholder="Add resolution notes..."
-                        ></textarea>
-
-                        <div style={{ display: 'flex', gap: '1rem' }}>
-                            <button className="primary-btn" style={{ flex: 1, background: 'var(--bg-secondary)', border: '1px solid var(--border-light)' }}>Add Note Log</button>
-                            <button className="primary-btn" style={{ flex: 1, background: 'var(--accent-success)' }}><CheckCircle size={16} /> Mark Resolved</button>
-                        </div>
+                                <div style={{ display: 'flex', gap: '1rem' }}>
+                                    <button className="primary-btn" style={{ flex: 1, background: 'var(--accent-success)' }} onClick={handleResolve}><CheckCircle size={16} /> Mark Resolved</button>
+                                </div>
+                            </>
+                        ) : (
+                            <div style={{ textAlign: 'center', padding: '2rem' }}>
+                                <CheckCircle size={48} color="var(--accent-success)" style={{ marginBottom: '1rem' }} />
+                                <h3>Resolved</h3>
+                                <p style={{ color: 'var(--text-muted)' }}>This complaint has been addressed by an administrator.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

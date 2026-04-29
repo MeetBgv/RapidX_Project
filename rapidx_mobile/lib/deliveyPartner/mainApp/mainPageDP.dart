@@ -8,6 +8,7 @@ import 'package:newrapidx/providers/delivery_partner_riverpod.dart';
 
 import 'Home/homepageDP.dart';
 import 'Orders/ordersPageDP.dart';
+import 'Wallet/walletPageDP.dart';
 import 'Profile/profilePageDP.dart';
 
 class mainPageDP extends ConsumerStatefulWidget {
@@ -25,9 +26,10 @@ class _mainPageDPState extends ConsumerState<mainPageDP> {
     _pages.addAll([
       HomePageDP(
         onHistoryTap: () => setState(() => _currentIndex = 1),
-        onSettingsTap: () => setState(() => _currentIndex = 2),
+        onSettingsTap: () => setState(() => _currentIndex = 3),
       ),
       const OrdersPage(),
+      const WalletPageDP(),
       const ProfilePageDP(),
     ]);
     _fetchProfileData();
@@ -62,6 +64,7 @@ class _mainPageDPState extends ConsumerState<mainPageDP> {
         selectedItemColor: const Color(0xFF0F4C75), // DPColors.deepBlue
         unselectedItemColor: Colors.grey, // 👈 normal item color
         backgroundColor: Colors.white, // 👈 bar background
+        type: BottomNavigationBarType.fixed, // To prevent shifting items
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() {
@@ -74,6 +77,7 @@ class _mainPageDPState extends ConsumerState<mainPageDP> {
             icon: Icon(Icons.shopping_bag),
             label: 'Orders',
           ),
+          BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Wallet'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),

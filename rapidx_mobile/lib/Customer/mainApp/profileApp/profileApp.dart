@@ -176,7 +176,7 @@ class _profileAppState extends State<profileApp> {
 
         style: OutlinedButton.styleFrom(
           minimumSize: Size(double.infinity, 45.h),
-          side: const BorderSide(color: Color(0xff234C6A)),
+          side: BorderSide(color: Color(0xff234C6A)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10.r),
           ),

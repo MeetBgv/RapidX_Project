@@ -18,6 +18,7 @@ class BillingPage extends StatefulWidget {
 class _BillingPageState extends State<BillingPage> {
 
   bool _isLoading = true;
+  bool _isPlacingOrder = false;
   double _distanceKm = 0.0;
   
   String deliveryMode = "LOCAL_DELIVERY";
@@ -165,7 +166,7 @@ class _BillingPageState extends State<BillingPage> {
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
+                blurRadius: 10.r,
                 offset: const Offset(0, -5),
               ),
             ],
@@ -219,7 +220,7 @@ class _BillingPageState extends State<BillingPage> {
                    boxShadow: [
                      BoxShadow(
                        color: Colors.black.withOpacity(0.04),
-                       blurRadius: 15,
+                       blurRadius: 15.r,
                        offset: const Offset(0, 5),
                      ),
                    ],
@@ -300,7 +301,7 @@ class _BillingPageState extends State<BillingPage> {
                        children: List.generate(40, (index) => Expanded(
                          child: Container(
                            color: index % 2 == 0 ? Colors.transparent : Colors.grey.shade300,
-                           height: 1.5,
+                           height: 1.5.h,
                          ),
                        )),
                      ),
@@ -441,12 +442,12 @@ class _BillingPageState extends State<BillingPage> {
             SizedBox(height: 20.h),
             _buildPaymentOption(
               title: "Online Payment (UPI)",
-              subtitle: "Fast and secure online payment",
+              subtitle: "Fast and secure online payment via Gateway",
               icon: Icons.account_balance_wallet_rounded,
               color: const Color(0xff56A3A6),
               onTap: () {
-                Navigator.pop(context);
-                _placeOrder('online');
+                Navigator.pop(context); // Close bottom sheet
+                _processOnlinePayment(); // Open fake payment gateway
               },
             ),
             SizedBox(height: 16.h),
@@ -456,12 +457,102 @@ class _BillingPageState extends State<BillingPage> {
               icon: Icons.payments_rounded,
               color: const Color(0xff234C6A),
               onTap: () {
-                Navigator.pop(context);
-                _placeOrder('cash');
+                Navigator.pop(context); // Close bottom sheet
+                _placeOrder('cash'); // Process directly
               },
             ),
             SizedBox(height: 30.h),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _processOnlinePayment() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: EdgeInsets.all(16.w),
+                decoration: BoxDecoration(
+                  color: const Color(0xff56A3A6).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.qr_code_scanner_rounded, size: 48.sp, color: const Color(0xff56A3A6)),
+              ),
+              SizedBox(height: 20.h),
+              Text(
+                "Secure Payment Gateway",
+                style: GoogleFonts.baloo2(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xff234C6A),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                "Amount to Pay:",
+                style: GoogleFonts.baloo2(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              Text(
+                "₹${totalAmount.toStringAsFixed(2)}",
+                style: GoogleFonts.baloo2(
+                  fontSize: 28.sp,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xff56A3A6),
+                ),
+              ),
+              SizedBox(height: 24.h),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff56A3A6),
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                    elevation: 0,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context); // Close gateway modal
+                    _placeOrder('online'); // Process the order after fake payment
+                  },
+                  child: Text(
+                    "Simulate Payment & Place Order",
+                    style: GoogleFonts.baloo2(
+                      fontSize: 16.sp,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 12.h),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  "Cancel Payment",
+                  style: GoogleFonts.baloo2(
+                    fontSize: 14.sp,
+                    color: Colors.red.shade400,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -526,6 +617,9 @@ class _BillingPageState extends State<BillingPage> {
   }
 
   Future<void> _placeOrder(String paymentMethod) async {
+    if (_isPlacingOrder) return;
+    setState(() { _isPlacingOrder = true; });
+    
     final provider = Provider.of<UserDataProvider>(context, listen: false);
 
     // Helper mapping based on backend value_master
@@ -542,12 +636,25 @@ class _BillingPageState extends State<BillingPage> {
       }
     }
 
+    int getParcelTypeId(String category) {
+      switch (category.toLowerCase()) {
+        case "document": return 21;
+        case "electronics": return 22;
+        case "food": return 23;
+        case "grocery": return 24;
+        case "clothing": return 25;
+        case "fragile": return 26;
+        default: return 27; // Other
+      }
+    }
+
     int getParcelSizeId(String size) {
-      if (size.toLowerCase().contains("small")) return 1;
-      if (size.toLowerCase().contains("medium")) return 2;
-      if (size.toLowerCase().contains("large")) return 3;
-      if (size.toLowerCase().contains("extra large")) return 4;
-      return 1;
+      final s = size.toLowerCase();
+      if (s.contains("small")) return 28;
+      if (s.contains("medium")) return 29;
+      if (s.contains("large") && !s.contains("very")) return 30;
+      if (s.contains("very large") || s.contains("extra")) return 31;
+      return 28;
     }
 
     // Construct request body
@@ -575,7 +682,7 @@ class _BillingPageState extends State<BillingPage> {
       if (provider.receiverLng != null) "receiver_lng": provider.receiverLng,
       "parcels": [
         {
-          "parcel_type_id": getVehicleTypeId(provider.vehicleType),
+          "parcel_type_id": getParcelTypeId(provider.parcelCategory),
           "parcel_size_id": getParcelSizeId(provider.parcelSize),
           "weight": provider.weight
         }
@@ -640,6 +747,10 @@ class _BillingPageState extends State<BillingPage> {
           backgroundColor: Colors.red,
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() { _isPlacingOrder = false; });
+      }
     }
   }
 }

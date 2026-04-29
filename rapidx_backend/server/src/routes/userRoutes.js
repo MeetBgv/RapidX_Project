@@ -40,6 +40,7 @@ router.get("/orders/active", userController.getDPActiveOrderHandler);
 router.post("/orders/:id/status", userController.updateOrderStatusHandler);
 
 router.get("/delivery-partner-orders", userController.getDeliveryPartnerOrdersHandler);
+router.get("/delivery-partner/wallet", userController.getDeliveryPartnerWalletHandler);
 router.get("/dashboard-stats", userController.getDashboardStatsHandler);
 router.get("/businesses", userController.getAllBusinessesHandler);
 
@@ -47,11 +48,25 @@ router.get("/parcels", userController.getAllParcelsHandler);
 router.get("/payments", userController.getAllPaymentsHandler);
 router.get("/payouts", userController.getAllPayoutsHandler);
 router.get("/payouts/stats", userController.getPayoutStatsHandler);
+router.get("/payouts/partner", userController.getPayoutsByPartnerHandler);
+router.post("/payouts/partner/:id/confirm-bulk-cash", userController.confirmPartnerBulkCashHandler);
+router.post("/payouts/partner/:id/pay-bulk", userController.processPartnerBulkPayoutHandler);
 router.post("/payouts/:id/confirm-cash", userController.confirmCashDepositHandler);
 router.post("/payouts/:id/pay", userController.processPayoutHandler);
 router.get("/complaints", userController.getAllComplaintsHandler);
+router.get("/my-complaints", userController.getMyComplaintsHandler);
 router.get("/billing", userController.getAllBillingHandler);
 router.get("/roles", userController.getAllRolesHandler);
 router.get("/masterdata", userController.getAllMasterDataHandler);
+
+// ── Admin Actions ─────────────────────────────────────────────────────────────
+router.post("/:id/toggle-ban", userController.toggleBanHandler);
+router.delete("/:id", userController.deleteUserHandler);
+router.post("/admin-create", userController.adminCreateUserHandler);
+router.post("/masterdata/category", userController.createMasterCategoryHandler);
+router.post("/masterdata/value", userController.createMasterValueHandler);
+router.post("/complaints/:id/resolve", userController.resolveComplaintHandler);
+router.post("/complaints", userController.createComplaintHandler);
+router.post("/billing/generate", userController.generateBillsHandler);
 
 module.exports = router;

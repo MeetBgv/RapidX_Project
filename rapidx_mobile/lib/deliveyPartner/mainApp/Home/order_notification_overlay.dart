@@ -161,23 +161,48 @@ class _OrderNotificationOverlayState
                       children: [
                         // Earnings
                         if (amount != null)
-                          Center(
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 20.w, vertical: 8.h),
-                              decoration: BoxDecoration(
-                                color: DPColors.successGreen.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(20.r),
-                              ),
-                              child: Text(
-                                '₹${(amount as num).toStringAsFixed(0)} Earnings',
-                                style: GoogleFonts.baloo2(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: DPColors.successGreen,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 16.w, vertical: 8.h),
+                                decoration: BoxDecoration(
+                                  color: (order['payment_method']?.toString().toLowerCase() == 'online')
+                                      ? DPColors.successGreen.withOpacity(0.1)
+                                      : DPColors.warningOrange.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20.r),
+                                ),
+                                child: Text(
+                                  (order['payment_method']?.toString().toLowerCase() == 'online')
+                                      ? 'Prepaid'
+                                      : 'Collect: ₹${(double.tryParse(amount.toString()) ?? 0.0).toStringAsFixed(0)}',
+                                  style: GoogleFonts.baloo2(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: (order['payment_method']?.toString().toLowerCase() == 'online')
+                                        ? DPColors.successGreen
+                                        : DPColors.warningOrange,
+                                  ),
                                 ),
                               ),
-                            ),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 16.w, vertical: 8.h),
+                                decoration: BoxDecoration(
+                                  color: DPColors.successGreen.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(20.r),
+                                ),
+                                child: Text(
+                                  'Earn: ₹${(double.tryParse(order['dp_share']?.toString() ?? '') ?? ((double.tryParse(amount.toString()) ?? 0.0) * 0.8)).toStringAsFixed(0)}',
+                                  style: GoogleFonts.baloo2(
+                                    fontSize: 14.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: DPColors.successGreen,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
 
                         SizedBox(height: 20.h),

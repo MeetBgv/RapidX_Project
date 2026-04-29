@@ -117,7 +117,7 @@ class _PlaceOrderContentState extends State<PlaceOrderContent> {
                 style: GoogleFonts.baloo2(
                   fontSize: 14.sp,
                   color: Colors.grey.shade600,
-                  height: 1.4,
+                  height: 1.4.h,
                 ),
               ),
               SizedBox(height: 8.h),
@@ -171,7 +171,7 @@ class _PlaceOrderContentState extends State<PlaceOrderContent> {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
+            blurRadius: 10.r,
             offset: const Offset(0, 4),
           ),
         ],
@@ -215,7 +215,7 @@ class _PlaceOrderContentState extends State<PlaceOrderContent> {
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.1),
-                              blurRadius: 4,
+                              blurRadius: 4.r,
                               offset: const Offset(0, 2),
                             ),
                           ],
@@ -325,11 +325,11 @@ class _PlaceOrderContentState extends State<PlaceOrderContent> {
                             decoration: BoxDecoration(
                               color: const Color(0xff56A3A6),
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
+                              border: Border.all(color: Colors.white, width: 2.w),
                               boxShadow: [
                                 BoxShadow(
                                   color: const Color(0xff56A3A6).withOpacity(0.3),
-                                  blurRadius: 4,
+                                  blurRadius: 4.r,
                                   offset: const Offset(0, 2),
                                 ),
                               ],
@@ -431,11 +431,11 @@ class _PlaceOrderContentState extends State<PlaceOrderContent> {
                       decoration: BoxDecoration(
                         color: const Color(0xffDE9325),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                        border: Border.all(color: Colors.white, width: 2.w),
                         boxShadow: [
                           BoxShadow(
                             color: const Color(0xffDE9325).withOpacity(0.3),
-                            blurRadius: 4,
+                            blurRadius: 4.r,
                             offset: const Offset(0, 2),
                           ),
                         ],
@@ -579,7 +579,7 @@ class _PlaceOrderContentState extends State<PlaceOrderContent> {
                   ),
                 ),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xff234C6A), width: 1.5),
+                  side: BorderSide(color: Color(0xff234C6A), width: 1.5.w),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.r),
                   ),
