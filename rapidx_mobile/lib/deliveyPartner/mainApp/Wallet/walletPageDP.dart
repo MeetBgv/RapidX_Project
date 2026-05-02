@@ -365,11 +365,12 @@ class _WalletPageDPState extends State<WalletPageDP> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Order #${item['order_id'].toString().length > 7 ? item['order_id'].toString().substring(0, 7) : item['order_id']}', style: DPTheme.h3.copyWith(fontSize: 13.sp)),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+                Wrap(
+                  spacing: 6.w,
+                  runSpacing: 2.h,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Text(!isCash ? 'Online (Flag 1)' : 'Cash (Flag 0)', style: TextStyle(fontSize: 9.sp, fontWeight: FontWeight.bold, color: !isCash ? const Color(0xFF0369A1) : const Color(0xFFD97706))),
-                    SizedBox(width: 6.w),
+                    Text(!isCash ? 'Online' : 'Cash', style: TextStyle(fontSize: 9.sp, fontWeight: FontWeight.bold, color: !isCash ? const Color(0xFF0369A1) : const Color(0xFFD97706))),
                     Text(DateFormat('dd MMM, hh:mm a').format(date), style: TextStyle(fontSize: 10.sp, color: DPColors.greyMedium)),
                   ],
                 ),

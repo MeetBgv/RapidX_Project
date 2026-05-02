@@ -15,10 +15,7 @@ const poolConfig = process.env.DB_URL
         host: process.env.DB_HOST,
         database: process.env.DB_NAME,
         password: process.env.DB_PASSWORD,
-        port: process.env.DB_PORT,
-        ssl: {
-            rejectUnauthorized: false
-        }
+        port: process.env.DB_PORT
     };
 
 const pool = new Pool(poolConfig);

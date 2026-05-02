@@ -99,25 +99,12 @@ const Hubs = () => {
     const [submitting, setSubmitting]   = useState(false);
     const [formError, setFormError]     = useState('');
 
-    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-    const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-    const supabaseHeaders = {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation',
-    };
-
-    // ── Fetch hubs directly from Supabase REST API ──────────────────────────
+    // ── Fetch hubs directly from local API ──────────────────────────
     const fetchHubs = async () => {
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch(
-                `${SUPABASE_URL}/rest/v1/hubs?select=hub_id,hub_name,hub_type,region,lat,lng,is_active&order=hub_type.asc,hub_name.asc`,
-                { headers: supabaseHeaders }
-            );
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/hubs`);
             if (!res.ok) throw new Error(`Failed to fetch hubs (${res.status})`);
             const data = await res.json();
             setHubs(data);
@@ -146,7 +133,7 @@ const Hubs = () => {
         setFormData(prev => ({ ...prev, hub_name: '' }));
     };
 
-    // ── Submit new hub directly to Supabase ────────────────────────────────
+    // ── Submit new hub directly to local API ────────────────────────────────
     const handleSubmitHub = async (e) => {
         e.preventDefault();
         if (!formData.hub_name.trim()) {
@@ -156,9 +143,9 @@ const Hubs = () => {
         setSubmitting(true);
         setFormError('');
         try {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/hubs`, {
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/hubs`, {
                 method: 'POST',
-                headers: supabaseHeaders,
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     hub_name: formData.hub_name.trim(),
                     hub_type: formData.hub_type,
@@ -169,9 +156,9 @@ const Hubs = () => {
             });
             if (!res.ok) {
                 const err = await res.json();
-                throw new Error(err.message || 'Failed to create hub');
+                throw new Error(err.error || 'Failed to create hub');
             }
-            const [newHub] = await res.json();
+            const newHub = await res.json();
             setHubs(prev => [...prev, newHub]);
 
             // Reset
@@ -185,18 +172,13 @@ const Hubs = () => {
         }
     };
 
-    // ── Deactivate hub (soft delete) via Supabase PATCH ────────────────────
+    // ── Deactivate hub (soft delete) via local API DELETE ────────────────────
     const handleDeleteHub = async (hubId) => {
         if (!window.confirm('Deactivate this hub?')) return;
         try {
-            const res = await fetch(
-                `${SUPABASE_URL}/rest/v1/hubs?hub_id=eq.${hubId}`,
-                {
-                    method: 'PATCH',
-                    headers: supabaseHeaders,
-                    body: JSON.stringify({ is_active: false }),
-                }
-            );
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/hubs/${hubId}`, {
+                method: 'DELETE'
+            });
             if (!res.ok) throw new Error('Failed to deactivate hub');
             setHubs(prev => prev.map(h => h.hub_id === hubId ? { ...h, is_active: false } : h));
         } catch (err) {

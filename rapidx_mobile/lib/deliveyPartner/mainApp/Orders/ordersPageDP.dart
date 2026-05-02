@@ -17,8 +17,9 @@ class OrdersPage extends StatefulWidget {
 }
 
 class _OrdersPageState extends State<OrdersPage> {
-  String selectedFilter = "Today";
-  final List<String> filters = ["Today", "This Week", "This Month"];
+  String selectedFilter = "All Time";
+
+  List<String> get filters => ["All Time", "Today", "This Week", "This Month"];
 
   List<Map<String, dynamic>> orders = [];
   bool isLoading = true;
@@ -27,7 +28,9 @@ class _OrdersPageState extends State<OrdersPage> {
     final now = DateTime.now();
     return orders.where((order) {
       final date = order['date'] as DateTime;
-      if (selectedFilter == "Today") {
+      if (selectedFilter == "All Time") {
+        return true;
+      } else if (selectedFilter == "Today") {
         return date.year == now.year && date.month == now.month && date.day == now.day;
       } else if (selectedFilter == "This Week") {
         final weekAgo = now.subtract(const Duration(days: 7));
@@ -64,7 +67,10 @@ class _OrdersPageState extends State<OrdersPage> {
               : "Standard Parcel";
 
           final amount = (item['order_amount'] as num?)?.toDouble() ?? 0.0;
-          final dpShare = (item['dp_share'] as num?)?.toDouble() ?? (amount * 0.8);
+          double dpShare = amount * 0.8;
+          if (item['dp_share'] != null) {
+            dpShare = double.tryParse(item['dp_share'].toString()) ?? dpShare;
+          }
 
           return {
             "id": item['order_id']?.toString() ?? "OD-000",
@@ -152,8 +158,10 @@ class _OrdersPageState extends State<OrdersPage> {
     return Container(
       color: DPColors.white,
       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-      child: Row(
-        children: filters.map((filter) {
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: filters.map((filter) {
           bool isSelected = filter == selectedFilter;
           return Padding(
             padding: EdgeInsets.only(right: 12.w),
@@ -187,6 +195,7 @@ class _OrdersPageState extends State<OrdersPage> {
             ),
           );
         }).toList(),
+        ),
       ),
     );
   }
@@ -254,7 +263,7 @@ class _OrdersPageState extends State<OrdersPage> {
                       ),
                       SizedBox(width: 4.w),
                       Text(
-                        order['paymentFlag'] == 1 ? "Online (Flag 1)" : "Cash (Flag 0)",
+                        order['paymentFlag'] == 1 ? "Online" : "Cash",
                         style: TextStyle(
                           fontSize: 11.sp,
                           fontWeight: FontWeight.bold,
@@ -409,7 +418,7 @@ class _OrdersPageState extends State<OrdersPage> {
                       borderRadius: BorderRadius.circular(6.r),
                     ),
                     child: Text(
-                      order['paymentFlag'] == 1 ? "Online (Flag 1)" : "Offline/Cash (Flag 0)",
+                      order['paymentFlag'] == 1 ? "Online" : "Offline/Cash",
                       style: DPTheme.h3.copyWith(
                         fontSize: 12.sp,
                         color: order['paymentFlag'] == 1 ? const Color(0xFF0369A1) : const Color(0xFFD97706),
