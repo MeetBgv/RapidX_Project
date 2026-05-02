@@ -14,7 +14,7 @@ class ApiConstants {
 
   // **TOGGLE THIS**
   // Set to true to test against your local machine, false to use the Vercel hosted server.
-  static const bool useLocal = true; 
+  static const bool useLocal = false; 
 
   // Set to true if testing on a Physical Device, false if on Emulator.
   static const bool isPhysicalDevice = true;
