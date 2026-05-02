@@ -17,7 +17,7 @@ class ApiConstants {
   static const bool useLocal = true; 
 
   // Set to true if testing on a Physical Device, false if on Emulator.
-  static const bool isPhysicalDevice = false;
+  static const bool isPhysicalDevice = true;
 
   static const String vercelUrl = 'https://rapid-x-project.vercel.app/api';
 
